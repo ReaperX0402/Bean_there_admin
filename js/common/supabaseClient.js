@@ -18,51 +18,72 @@ const storageAvailable = () => {
   return storageSupported;
 };
 
-const serializeSession = (session) => {
-  if (!session?.user) return null;
-  const { user } = session;
-  const { id, email, phone, user_metadata: userMetadata, app_metadata: appMetadata, aud, role } = user;
+const serializeAdmin = (admin) => {
+  const adminId = admin?.admin_id ?? admin?.id;
+  if (!adminId) return null;
+  const { cafe_id = null, name = null, email = null, created_at = null } = admin;
   return {
-    user: {
-      id,
-      email: email || null,
-      phone: phone || null,
-      aud: aud || null,
-      role: role || null,
-      user_metadata: userMetadata || {},
-      app_metadata: appMetadata || {}
+    admin: {
+      admin_id: adminId,
+      cafe_id,
+      name,
+      email,
+      created_at
     }
   };
 };
 
-export const cacheSession = (session) => {
+export const cacheAdminSession = (adminOrSession) => {
   if (!storageAvailable()) return;
-  if (!session?.user) {
+
+  const session = adminOrSession?.admin ? adminOrSession.admin : adminOrSession;
+  const serialized = serializeAdmin(session);
+
+  if (!serialized) {
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
     return;
   }
 
-  const safeSession = serializeSession(session);
-  if (!safeSession) return;
-
   try {
-    window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(safeSession));
+    window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(serialized));
   } catch (error) {
-    console.warn('Unable to persist session details', error);
+    console.warn('Unable to persist admin session details', error);
   }
 };
 
-export const getCachedSession = () => {
+export const clearAdminSession = () => {
+  if (!storageAvailable()) return;
+  window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+};
+
+export const getCachedAdminSession = () => {
   if (!storageAvailable()) return null;
   const cached = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
   if (!cached) return null;
   try {
     return JSON.parse(cached);
   } catch (error) {
-    console.warn('Unable to parse cached session, clearing it', error);
+    console.warn('Unable to parse cached admin session, clearing it', error);
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
     return null;
   }
+};
+
+export const getCurrentAdminSession = async () => getCachedAdminSession();
+
+export const requireAdminSession = async () => {
+  const session = await getCurrentAdminSession();
+  if (!session?.admin?.admin_id) {
+    clearAdminSession();
+    window.location.replace('login.html');
+    return null;
+  }
+  return session;
+};
+
+export const getAdminTableName = () => {
+  const table = document.documentElement.dataset.tableAdmin?.trim();
+  return table && table.length ? table : 'admin';
 };
 
 const resolveSupabaseConfig = () => {
@@ -102,40 +123,6 @@ export const requireSupabaseClient = () => {
   return client;
 };
 
-export const getCurrentSession = async () => {
-  const client = getSupabaseClient();
-  if (!client) return null;
-  try {
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-    const session = data?.session ?? null;
-    if (session?.user) {
-      cacheSession(session);
-    }
-    return session;
-  } catch (error) {
-    console.warn('Unable to fetch Supabase session', error);
-    return null;
-  }
-};
-
-export const requireSession = async () => {
-  const session = await getCurrentSession();
-  if (!session?.user) {
-    cacheSession(null);
-    window.location.replace('login.html');
-    return null;
-  }
-  return session;
-};
-
 export const signOut = async () => {
-  const client = getSupabaseClient();
-  if (!client) return;
-  try {
-    await client.auth.signOut();
-    cacheSession(null);
-  } catch (error) {
-    console.warn('Error during Supabase sign-out', error);
-  }
+  clearAdminSession();
 };

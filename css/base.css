@@ -17,6 +17,10 @@
   font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+html[data-auth-guard='required'] body {
+  display: none;
+}
+
 * {
   box-sizing: border-box;
 }
