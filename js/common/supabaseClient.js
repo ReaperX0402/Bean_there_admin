@@ -19,11 +19,12 @@ const storageAvailable = () => {
 };
 
 const serializeAdmin = (admin) => {
-  const adminId = admin?.admin_id ?? admin?.id;
+  const adminId = admin?.id ?? admin?.admin_id;
   if (!adminId) return null;
   const { cafe_id = null, name = null, email = null, created_at = null } = admin;
   return {
     admin: {
+      id: adminId,
       admin_id: adminId,
       cafe_id,
       name,
@@ -73,7 +74,8 @@ export const getCurrentAdminSession = async () => getCachedAdminSession();
 
 export const requireAdminSession = async () => {
   const session = await getCurrentAdminSession();
-  if (!session?.admin?.admin_id) {
+  const hasId = Boolean(session?.admin?.id || session?.admin?.admin_id);
+  if (!hasId) {
     clearAdminSession();
     window.location.replace('login.html');
     return null;

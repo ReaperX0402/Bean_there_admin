@@ -32,19 +32,20 @@ const populateProfile = (admin) => {
 };
 
 const fetchLatestAdminRecord = async (admin) => {
-  if (!supabaseClient || !admin?.admin_id) return admin;
+  const adminId = admin?.id ?? admin?.admin_id;
+  if (!supabaseClient || !adminId) return admin;
 
   const { data, error } = await supabaseClient
     .from(ADMIN_TABLE)
-    .select('admin_id, cafe_id, name, email, created_at')
-    .eq('admin_id', admin.admin_id)
+    .select('id, cafe_id, name, email, created_at')
+    .eq('id', adminId)
     .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {
     throw error;
   }
 
-  return data || admin;
+  return data ? { ...data, admin_id: data.id } : admin;
 };
 
 const initialize = async () => {

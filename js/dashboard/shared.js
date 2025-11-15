@@ -25,7 +25,8 @@ const renderSessionAdmin = (session) => {
   }
 
   const { admin } = session;
-  const displayName = admin.name || admin.email || `Admin #${admin.admin_id}`;
+  const identifier = admin.id ?? admin.admin_id;
+  const displayName = admin.name || admin.email || (identifier ? `Admin #${identifier}` : 'Admin');
 
   container.classList.remove('hidden');
   container.innerHTML = '';

@@ -72,12 +72,23 @@ if (signupForm) {
             pwd: password
           }
         ])
-        .select('admin_id, cafe_id, name, email, created_at')
+        .select('id, cafe_id, name, email, created_at')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error while creating admin record', error);
+        showNotice(
+          'Unable to create your admin account because of a database issue. Please try again later.',
+          'error'
+        );
+        return;
+      }
 
-      cacheAdminSession(data);
+      const normalizedAdmin = {
+        ...data,
+        admin_id: data?.id ?? data?.admin_id
+      };
+      cacheAdminSession(normalizedAdmin);
       showNotice('Account created and signed in successfully.', 'success');
       window.location.replace('index.html');
     } catch (error) {

@@ -23,7 +23,8 @@
       return;
     }
 
-    if (!parsed?.admin?.admin_id) {
+    const adminId = parsed?.admin?.id || parsed?.admin?.admin_id;
+    if (!adminId) {
       redirectToLogin();
       return;
     }

@@ -85,20 +85,31 @@ if (loginForm) {
       setFormLoading(loginForm, true);
       const { data, error } = await supabase
         .from(ADMIN_TABLE)
-        .select('admin_id, cafe_id, name, email, pwd, created_at')
+        .select('id, cafe_id, name, email, pwd, created_at')
         .eq('email', email)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error while verifying admin credentials', error);
+        showNotice(
+          'Unable to check your credentials because of a database issue. Please try again later.',
+          'error'
+        );
+        return;
+      }
 
       const storedPassword = data?.pwd != null ? String(data.pwd) : '';
       if (!data || storedPassword !== password) {
-        showNotice('Invalid email or password.', 'error');
+        showNotice('Incorrect email or password. Please try again.', 'error');
         return;
       }
 
       const { pwd, ...admin } = data;
-      cacheAdminSession(admin);
+      const normalizedAdmin = {
+        ...admin,
+        admin_id: admin?.id ?? admin?.admin_id
+      };
+      cacheAdminSession(normalizedAdmin);
       showNotice('Logged in successfully.', 'success');
       window.location.replace('index.html');
     } catch (error) {
