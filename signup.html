@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  data-table-orders="orders"
+  data-table-order-items="order_items"
+  data-table-menu-items="menu_items"
+  data-table-staff="staff"
+  data-table-staff-stores="staff_store_assignments"
+  data-table-stores="stores"
+  data-table-staff-activity="staff_activity_logs"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bean There Admin · Sign up</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app-notice" class="app-notice hidden" role="status"></div>
+    <main class="auth-layout" aria-labelledby="page-title">
+      <div>
+        <h1 id="page-title" class="brand">
+          <span class="brand-accent">Bean</span> There Admin
+        </h1>
+        <p class="auth-subtitle">Create an account to manage your café.</p>
+      </div>
+      <form id="signup-form" class="auth-form">
+        <div class="form-row">
+          <label class="form-field">
+            <span>First name</span>
+            <input type="text" name="firstName" placeholder="Alex" required />
+          </label>
+          <label class="form-field">
+            <span>Last name</span>
+            <input type="text" name="lastName" placeholder="Rivera" required />
+          </label>
+        </div>
+        <label class="form-field">
+          <span>Email</span>
+          <input type="email" name="email" placeholder="admin@beanthere.com" required />
+        </label>
+        <label class="form-field">
+          <span>Password</span>
+          <input type="password" name="password" placeholder="Create a strong password" required />
+        </label>
+        <label class="form-field">
+          <span>Confirm password</span>
+          <input type="password" name="confirmPassword" placeholder="Repeat your password" required />
+        </label>
+        <button type="submit" class="primary-btn">Sign up</button>
+      </form>
+      <p class="auth-switch">
+        Already have an account?
+        <a href="login.html" class="link-btn">Log in</a>
+      </p>
+    </main>
+    <script src="supabase_config.js"></script>
+    <script src="js/auth/signup.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.profile-card dl {
+  margin: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.profile-card dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.profile-card dd {
+  margin: 0.25rem 0 0;
+}
+
+.profile-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.5rem;
+}
