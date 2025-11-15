@@ -14,60 +14,14 @@ const statusChips = Array.from(document.querySelectorAll('[data-status]'));
 const connectionStatus = document.getElementById('connection-status');
 
 const TABLES = {
-  orders: htmlRoot.dataset.tableOrders || 'orders',
-  orderItems: htmlRoot.dataset.tableOrderItems || 'order_items'
+  orders: htmlRoot.dataset.tableOrders || 'order',
+  orderItems: htmlRoot.dataset.tableOrderItems || 'order_item',
+  items: htmlRoot.dataset.tableItems || 'item'
 };
 
 let supabaseClient = null;
 let orders = [];
 let currentStatusFilter = 'all';
-
-let orderColumnMap = {
-  id: 'id',
-  code: 'order_code',
-  status: 'status',
-  total: 'total_amount',
-  createdAt: 'created_at',
-  customer: 'customer_name'
-};
-
-let orderItemColumnMap = {
-  orderId: 'order_id',
-  name: 'name',
-  quantity: 'quantity'
-};
-
-const detectColumn = (keys, candidates, fallback) => {
-  for (const candidate of candidates) {
-    if (keys.has(candidate)) return candidate;
-  }
-  return fallback;
-};
-
-const configureOrderMapping = (rows) => {
-  const sample = rows?.find((row) => row && typeof row === 'object');
-  if (!sample) return;
-  const keys = new Set(Object.keys(sample));
-  orderColumnMap = {
-    id: detectColumn(keys, ['id', 'order_id', 'uuid'], orderColumnMap.id),
-    code: detectColumn(keys, ['order_code', 'order_number', 'reference', 'code', 'id'], orderColumnMap.code),
-    status: detectColumn(keys, ['status', 'order_status'], orderColumnMap.status),
-    total: detectColumn(keys, ['total_amount', 'total', 'amount', 'grand_total'], orderColumnMap.total),
-    createdAt: detectColumn(keys, ['created_at', 'createdAt', 'placed_at', 'inserted_at'], orderColumnMap.createdAt),
-    customer: detectColumn(keys, ['customer_name', 'customer', 'customer_full_name', 'name'], orderColumnMap.customer)
-  };
-};
-
-const configureOrderItemMapping = (rows) => {
-  const sample = rows?.find((row) => row && typeof row === 'object');
-  if (!sample) return;
-  const keys = new Set(Object.keys(sample));
-  orderItemColumnMap = {
-    orderId: detectColumn(keys, ['order_id', 'orderId', 'order', 'orders_id'], orderItemColumnMap.orderId),
-    name: detectColumn(keys, ['name', 'item_name', 'menu_item_name'], orderItemColumnMap.name),
-    quantity: detectColumn(keys, ['quantity', 'qty', 'amount'], orderItemColumnMap.quantity)
-  };
-};
 
 const renderOrderItems = (items) => {
   if (!items || items.length === 0) {
@@ -102,7 +56,7 @@ const populateOrders = () => {
       (order) => `
         <tr>
           <td>${order.order_id}</td>
-          <td>${order.customer}</td>
+          <td>${order.user_id ?? '—'}</td>
           <td><span class="badge ${order.status}">${formatStatus(order.status)}</span></td>
           <td>${formatCurrency(order.total)}</td>
           <td>${order.placed_at}</td>
@@ -118,9 +72,8 @@ const populateOrders = () => {
 const fetchOrderItems = async (orderRows) => {
   if (!supabaseClient || !orderRows?.length) return new Map();
 
-  const idKey = orderColumnMap.id || 'id';
   const orderIds = orderRows
-    .map((row) => row?.[idKey])
+    .map((row) => row?.order_id)
     .filter((value) => value !== null && value !== undefined);
 
   if (!orderIds.length) return new Map();
@@ -128,28 +81,47 @@ const fetchOrderItems = async (orderRows) => {
   try {
     const { data, error } = await supabaseClient
       .from(TABLES.orderItems)
-      .select('*')
-      .in(orderItemColumnMap.orderId || 'order_id', orderIds);
+      .select('order_id, item_id, qty')
+      .in('order_id', orderIds);
 
     if (error) throw error;
-    configureOrderItemMapping(data);
+
+    const itemIds = Array.from(
+      new Set(
+        (data || [])
+          .map((row) => row?.item_id)
+          .filter((value) => value !== null && value !== undefined)
+      )
+    );
+
+    const itemNameMap = new Map();
+    if (itemIds.length) {
+      try {
+        const { data: itemRows, error: itemError } = await supabaseClient
+          .from(TABLES.items)
+          .select('item_id, item_name')
+          .in('item_id', itemIds);
+
+        if (itemError) throw itemError;
+        (itemRows || []).forEach((item) => {
+          if (item?.item_id !== null && item?.item_id !== undefined) {
+            itemNameMap.set(item.item_id, item.item_name || `Item #${item.item_id}`);
+          }
+        });
+      } catch (itemError) {
+        console.warn('Unable to load item names from Supabase', itemError);
+      }
+    }
 
     const map = new Map();
     (data || []).forEach((item) => {
-      const orderId = item?.[orderItemColumnMap.orderId] ?? item?.order_id;
+      const orderId = item?.order_id;
       if (orderId === null || orderId === undefined) return;
-      const quantityRaw = item?.[orderItemColumnMap.quantity];
-      const quantity = Number(quantityRaw ?? 1) || 1;
-      const joinedName =
-        item?.menu_items?.name ??
-        item?.menu_item?.name ??
-        item?.[orderItemColumnMap.name] ??
-        item?.menu_item_name ??
-        item?.menu_item_id ??
-        'Menu item';
+      const quantity = Number(item?.qty ?? 1) || 1;
+      const label = itemNameMap.get(item?.item_id) || `Item #${item?.item_id ?? '—'}`;
 
       const existing = map.get(orderId) || [];
-      existing.push({ name: joinedName, qty: quantity });
+      existing.push({ name: label, qty: quantity });
       map.set(orderId, existing);
     });
 
@@ -166,44 +138,28 @@ const refreshOrders = async () => {
     ordersTableBody.innerHTML = renderPlaceholderRow(6, 'Loading orders…');
     const { data, error } = await supabaseClient
       .from(TABLES.orders)
-      .select('*')
-      .order(orderColumnMap.createdAt || 'created_at', { ascending: false })
+      .select('order_id, user_id, status, total, created_at, notes, cafe_id')
+      .order('created_at', { ascending: false })
       .limit(100);
 
     if (error) throw error;
-    configureOrderMapping(data);
+
     const itemsByOrder = await fetchOrderItems(data);
 
-    const idKey = orderColumnMap.id || 'id';
-    const codeKey = orderColumnMap.code || idKey;
-    const statusKey = orderColumnMap.status || 'status';
-    const totalKey = orderColumnMap.total || 'total_amount';
-    const createdAtKey = orderColumnMap.createdAt || 'created_at';
-    const customerKey = orderColumnMap.customer || 'customer_name';
-
     orders = (data || []).map((row) => {
-      const rawStatus = row?.[statusKey];
-      const status = normalizeOrderStatus(rawStatus);
-      const totalRaw = row?.[totalKey];
-      const total = Number(totalRaw ?? 0);
-      const createdAt = row?.[createdAtKey] ?? row?.created_at ?? row?.placed_at;
-      const orderId = row?.[idKey] ?? row?.id;
-      const orderCode = row?.[codeKey] ?? orderId ?? '—';
-      const customer =
-        row?.[customerKey] ??
-        row?.customer ??
-        row?.customer_full_name ??
-        row?.customer_details?.name ??
-        'Guest customer';
-
-      const items = itemsByOrder.get(orderId) || [];
+      const status = normalizeOrderStatus(row?.status);
+      const total = Number(row?.total ?? 0);
+      const createdAt = row?.created_at;
+      const items = itemsByOrder.get(row?.order_id) || [];
 
       return {
-        order_id: orderCode,
-        customer,
+        order_id: row?.order_id ?? '—',
+        user_id: row?.user_id,
+        cafe_id: row?.cafe_id,
         status,
         total: Number.isFinite(total) ? total : 0,
         placed_at: formatDateTime(createdAt),
+        notes: row?.notes || '',
         items
       };
     });

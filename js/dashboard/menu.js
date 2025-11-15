@@ -16,73 +16,23 @@ const menuForm = document.getElementById('menu-form');
 const addMenuItemBtn = document.getElementById('add-menu-item');
 
 const TABLES = {
-  menuItems: htmlRoot.dataset.tableMenuItems || 'menu_items'
+  items: htmlRoot.dataset.tableMenuItems || 'item'
 };
 
 let supabaseClient = null;
 let menuItems = [];
 let editingItemIndex = null;
 
-let menuItemColumnMap = {
-  id: 'id',
-  name: 'name',
-  category: 'category',
-  price: 'price',
-  status: 'status',
-  isAvailable: 'is_available'
-};
-
-const detectColumn = (keys, candidates, fallback) => {
-  for (const candidate of candidates) {
-    if (keys.has(candidate)) return candidate;
-  }
-  return fallback;
-};
-
-const configureMenuItemMapping = (rows) => {
-  const sample = rows?.find((row) => row && typeof row === 'object');
-  if (!sample) return;
-  const keys = new Set(Object.keys(sample));
-  menuItemColumnMap = {
-    id: detectColumn(keys, ['menu_item_id', 'id', 'uuid', 'menuId'], menuItemColumnMap.id),
-    name: detectColumn(keys, ['name', 'item_name', 'menu_item_name'], menuItemColumnMap.name),
-    category: detectColumn(keys, ['category', 'category_name', 'menu_category', 'type'], menuItemColumnMap.category),
-    price: detectColumn(keys, ['price', 'unit_price', 'price_amount', 'price_cents'], menuItemColumnMap.price),
-    status: detectColumn(keys, ['status', 'availability_status'], menuItemColumnMap.status),
-    isAvailable: detectColumn(keys, ['is_available', 'available', 'in_stock'], menuItemColumnMap.isAvailable)
-  };
-};
-
 const mapMenuItemRow = (row) => {
-  const idKey = menuItemColumnMap.id || 'id';
-  const nameKey = menuItemColumnMap.name || 'name';
-  const categoryKey = menuItemColumnMap.category || 'category';
-  const priceKey = menuItemColumnMap.price || 'price';
-  const statusKey = menuItemColumnMap.status;
-  const availableKey = menuItemColumnMap.isAvailable;
-
-  const priceRaw = row?.[priceKey];
-  const price = (() => {
-    const numeric = Number(priceRaw);
-    if (Number.isNaN(numeric)) return Number(priceRaw) || 0;
-    if (priceKey?.toLowerCase().includes('cents')) {
-      return numeric / 100;
-    }
-    return numeric;
-  })();
-
-  let status = 'available';
-  if (statusKey && row?.[statusKey] !== undefined) {
-    status = normalizeMenuStatus(row?.[statusKey]);
-  } else if (availableKey && row?.[availableKey] !== undefined) {
-    status = row?.[availableKey] ? 'available' : 'out_of_stock';
-  }
+  const priceValue = Number(row?.price ?? 0);
+  const status = normalizeMenuStatus(row?.availability);
 
   return {
-    menu_item_id: row?.[idKey] ?? row?.menu_item_id ?? row?.id ?? '—',
-    name: row?.[nameKey] ?? row?.name ?? 'Menu item',
-    category: row?.[categoryKey] ?? row?.category ?? 'Uncategorized',
-    price: Number.isFinite(price) ? price : 0,
+    item_id: row?.item_id ?? '—',
+    menu_id: row?.menu_id ?? null,
+    name: row?.item_name || 'Menu item',
+    description: row?.description || '',
+    price: Number.isFinite(priceValue) ? priceValue : 0,
     status,
     raw: row
   };
@@ -103,10 +53,15 @@ const populateMenu = () => {
           <td>
             <div class="menu-item-cell">
               <strong>${item.name}</strong>
-              <div class="menu-item-meta">${item.menu_item_id}</div>
+              <div class="menu-item-meta">ID: ${item.item_id}${
+                item.menu_id !== null && item.menu_id !== undefined
+                  ? ` • Menu: ${item.menu_id}`
+                  : ''
+              }</div>
+              ${item.description ? `<div class="menu-item-description">${item.description}</div>` : ''}
             </div>
           </td>
-          <td>${item.category}</td>
+          <td>${item.menu_id ?? '—'}</td>
           <td>${formatCurrency(item.price)}</td>
           <td><span class="badge ${item.status}">${formatStatus(item.status)}</span></td>
           <td>
@@ -124,30 +79,16 @@ const populateMenu = () => {
 };
 
 const buildMenuMutationPayload = (values) => {
-  const payload = {};
-  const nameKey = menuItemColumnMap.name || 'name';
-  const categoryKey = menuItemColumnMap.category || 'category';
-  const priceKey = menuItemColumnMap.price || 'price';
-  const statusKey = menuItemColumnMap.status;
-  const availableKey = menuItemColumnMap.isAvailable;
+  const status = normalizeMenuStatus(values.status || 'available');
+  const availability = status === 'available';
 
-  payload[nameKey] = values.name;
-  payload[categoryKey] = values.category;
-  if (priceKey.toLowerCase().includes('cents')) {
-    payload[priceKey] = Math.round(values.price * 100);
-  } else {
-    payload[priceKey] = values.price;
-  }
-
-  if (statusKey) {
-    payload[statusKey] = values.status;
-  } else if (availableKey) {
-    payload[availableKey] = values.status === 'available';
-  } else {
-    payload.status = values.status;
-  }
-
-  return payload;
+  return {
+    menu_id: values.menuId ?? null,
+    item_name: values.name,
+    description: values.description || null,
+    price: values.price,
+    availability
+  };
 };
 
 const openMenuDialog = (mode, index = null) => {
@@ -162,7 +103,12 @@ const openMenuDialog = (mode, index = null) => {
     const item = menuItems[editingItemIndex];
     if (item) {
       menuForm.itemName.value = item.name;
-      menuForm.category.value = item.category;
+      if (menuForm.menuId) {
+        menuForm.menuId.value = item.menu_id ?? '';
+      }
+      if (menuForm.description) {
+        menuForm.description.value = item.description || '';
+      }
       menuForm.price.value = item.price;
       if (menuForm.status) {
         menuForm.status.value = item.status;
@@ -170,6 +116,12 @@ const openMenuDialog = (mode, index = null) => {
     }
   } else {
     menuForm.reset();
+    if (menuForm.menuId) {
+      menuForm.menuId.value = '';
+    }
+    if (menuForm.description) {
+      menuForm.description.value = '';
+    }
     if (menuForm.status) {
       menuForm.status.value = 'available';
     }
@@ -187,12 +139,11 @@ const refreshMenu = async () => {
   try {
     menuTableBody.innerHTML = renderPlaceholderRow(5, 'Loading menu…');
     const { data, error } = await supabaseClient
-      .from(TABLES.menuItems)
-      .select('*')
-      .order(menuItemColumnMap.name || 'name', { ascending: true });
+      .from(TABLES.items)
+      .select('item_id, menu_id, item_name, description, price, availability')
+      .order('item_name', { ascending: true });
 
     if (error) throw error;
-    configureMenuItemMapping(data);
     menuItems = (data || []).map(mapMenuItemRow);
     populateMenu();
   } catch (error) {
@@ -215,12 +166,13 @@ const handleMenuFormSubmit = async (event) => {
   try {
     const formData = new FormData(menuForm);
     const name = formData.get('itemName')?.toString().trim();
-    const category = formData.get('category')?.toString().trim();
+    const menuIdInput = formData.get('menuId')?.toString().trim();
+    const description = formData.get('description')?.toString().trim();
     const status = formData.get('status')?.toString();
     const priceValue = Number(formData.get('price'));
 
-    if (!name || !category) {
-      showNotice('Please provide both a name and category for the menu item.', 'warning');
+    if (!name || !menuIdInput) {
+      showNotice('Please provide both a menu ID and item name.', 'warning');
       return;
     }
 
@@ -229,29 +181,35 @@ const handleMenuFormSubmit = async (event) => {
       return;
     }
 
+    let menuIdValue = null;
+    if (menuIdInput) {
+      const parsedMenuId = Number(menuIdInput);
+      menuIdValue = Number.isNaN(parsedMenuId) ? menuIdInput : parsedMenuId;
+    }
+
     const payload = buildMenuMutationPayload({
       name,
-      category,
+      menuId: menuIdValue,
+      description,
       price: priceValue,
       status: status || 'available'
     });
 
     setFormLoading(menuForm, true);
     if (editingItemIndex === null) {
-      const { error } = await supabaseClient.from(TABLES.menuItems).insert([payload]);
+      const { error } = await supabaseClient.from(TABLES.items).insert([payload]);
       if (error) throw error;
       showNotice('Menu item created successfully.', 'success');
     } else {
       const target = menuItems[editingItemIndex];
-      const idKey = menuItemColumnMap.id || 'id';
-      const identifier = target?.raw?.[idKey] ?? target?.menu_item_id;
+      const identifier = target?.raw?.item_id ?? target?.item_id;
       if (identifier === undefined || identifier === null) {
         throw new Error('Unable to determine the menu item identifier for update.');
       }
       const { error } = await supabaseClient
-        .from(TABLES.menuItems)
+        .from(TABLES.items)
         .update(payload)
-        .eq(idKey, identifier);
+        .eq('item_id', identifier);
       if (error) throw error;
       showNotice('Menu item updated successfully.', 'success');
     }
@@ -286,15 +244,14 @@ const handleMenuAction = async (event) => {
     if (!confirmed) return;
 
     try {
-      const idKey = menuItemColumnMap.id || 'id';
-      const identifier = item?.raw?.[idKey] ?? item?.menu_item_id;
+      const identifier = item?.raw?.item_id ?? item?.item_id;
       if (identifier === undefined || identifier === null) {
         throw new Error('Unable to determine the menu item identifier for deletion.');
       }
       const { error } = await supabaseClient
-        .from(TABLES.menuItems)
+        .from(TABLES.items)
         .delete()
-        .eq(idKey, identifier);
+        .eq('item_id', identifier);
       if (error) throw error;
       showNotice('Menu item deleted.', 'success');
       await refreshMenu();

@@ -19,11 +19,12 @@ const storageAvailable = () => {
 };
 
 const serializeAdmin = (admin) => {
-  if (!admin?.admin_id) return null;
-  const { admin_id, cafe_id = null, name = null, email = null, created_at = null } = admin;
+  const adminId = admin?.admin_id ?? admin?.id;
+  if (!adminId) return null;
+  const { cafe_id = null, name = null, email = null, created_at = null } = admin;
   return {
     admin: {
-      admin_id,
+      admin_id: adminId,
       cafe_id,
       name,
       email,
