@@ -1,9 +1,15 @@
-import { getSupabaseClient, getCurrentSession, cacheSession } from '../common/supabaseClient.js';
+import {
+  getSupabaseClient,
+  getCurrentAdminSession,
+  cacheAdminSession,
+  getAdminTableName
+} from '../common/supabaseClient.js';
 import { showNotice, setFormLoading, hideNotice } from '../common/ui.js';
 
 const signupForm = document.getElementById('signup-form');
 
 const supabase = getSupabaseClient();
+const ADMIN_TABLE = getAdminTableName();
 
 const disableForm = () => {
   if (!signupForm) return;
@@ -25,8 +31,8 @@ const initialize = async () => {
     return;
   }
 
-  const session = await getCurrentSession();
-  if (session?.user) {
+  const session = await getCurrentAdminSession();
+  if (session?.admin) {
     window.location.replace('index.html');
   }
 };
@@ -37,13 +43,13 @@ if (signupForm) {
     if (!supabase) return;
 
     const formData = new FormData(signupForm);
-    const firstName = formData.get('firstName')?.toString().trim();
-    const lastName = formData.get('lastName')?.toString().trim();
+    const name = formData.get('name')?.toString().trim();
+    const cafeId = formData.get('cafeId')?.toString().trim();
     const email = formData.get('email')?.toString().trim();
     const password = formData.get('password')?.toString();
     const confirmPassword = formData.get('confirmPassword')?.toString();
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!name || !cafeId || !email || !password) {
       showNotice('Please complete all required fields.', 'warning');
       return;
     }
@@ -56,29 +62,37 @@ if (signupForm) {
     try {
       hideNotice();
       setFormLoading(signupForm, true);
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName
+      const { data, error } = await supabase
+        .from(ADMIN_TABLE)
+        .insert([
+          {
+            name,
+            cafe_id: cafeId,
+            email,
+            pwd: password
           }
-        }
-      });
+        ])
+        .select('id, cafe_id, name, email, created_at')
+        .single();
 
-      if (error) throw error;
-
-      if (data.session?.user) {
-        cacheSession(data.session);
-        showNotice('Account created and signed in successfully.', 'success');
-        window.location.replace('index.html');
-      } else {
-        showNotice('Check your email to confirm the new admin account, then log in.', 'info', true);
-        window.location.replace('login.html');
+      if (error) {
+        console.error('Database error while creating admin record', error);
+        showNotice(
+          'Unable to create your admin account because of a database issue. Please try again later.',
+          'error'
+        );
+        return;
       }
+
+      const normalizedAdmin = {
+        ...data,
+        admin_id: data?.id ?? data?.admin_id
+      };
+      cacheAdminSession(normalizedAdmin);
+      showNotice('Account created and signed in successfully.', 'success');
+      window.location.replace('index.html');
     } catch (error) {
-      console.error('Unable to sign up with Supabase', error);
+      console.error('Unable to sign up with Supabase admin table', error);
       showNotice(error?.message || 'Unable to sign up with Supabase.', 'error');
     } finally {
       setFormLoading(signupForm, false);

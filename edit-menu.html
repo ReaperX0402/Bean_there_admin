@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html
   lang="en"
-  data-table-orders="orders"
-  data-table-order-items="order_items"
-  data-table-menu-items="menu_items"
-  data-table-staff="staff"
-  data-table-staff-stores="staff_store_assignments"
-  data-table-stores="stores"
-  data-table-staff-activity="staff_activity_logs"
+  data-auth-guard="required"
+  data-table-admin="admin"
+  data-table-orders="order"
+  data-table-order-items="order_item"
+  data-table-items="item"
+  data-table-menu-items="item"
 >
   <head>
     <meta charset="UTF-8" />
@@ -22,6 +21,7 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
+    <script src="js/common/authGuard.js"></script>
   </head>
   <body>
     <div id="app-notice" class="app-notice hidden" role="status"></div>
@@ -46,7 +46,7 @@
           </a>
         </nav>
         <div class="sidebar-footer">
-          <div class="sidebar-session hidden" id="session-user"></div>
+          <div class="sidebar-session hidden" id="session-admin"></div>
           <button id="logout-btn" class="secondary-btn">Log out</button>
         </div>
       </aside>
@@ -56,7 +56,7 @@
           <div>
             <h1>Menu management</h1>
             <p class="page-subtitle">
-              Maintain the Supabase-backed <code>menu_items</code> catalog and keep pricing in sync.
+              Maintain the Supabase-backed <code>item</code> catalog and keep pricing in sync.
             </p>
           </div>
         </header>
@@ -71,7 +71,7 @@
               <thead>
                 <tr>
                   <th>Menu item</th>
-                  <th>Category</th>
+                  <th>Menu ID</th>
                   <th>Price</th>
                   <th>Availability</th>
                   <th>Actions</th>
@@ -99,8 +99,12 @@
             <input type="text" name="itemName" placeholder="Iced Mocha" required />
           </label>
           <label class="form-field">
-            <span>Category</span>
-            <input type="text" name="category" placeholder="Beverage" required />
+            <span>Menu ID</span>
+            <input type="text" name="menuId" placeholder="1" required />
+          </label>
+          <label class="form-field">
+            <span>Description</span>
+            <textarea name="description" placeholder="Tasting notes, ingredients, etc." rows="3"></textarea>
           </label>
           <label class="form-field">
             <span>Price</span>
