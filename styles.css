@@ -28,6 +28,63 @@ body {
   place-items: stretch;
 }
 
+.app-notice {
+  position: fixed;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.5rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  max-width: min(480px, 90vw);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  line-height: 1.4;
+}
+
+.app-notice.hidden {
+  display: none !important;
+}
+
+.app-notice::before {
+  content: 'ℹ️';
+}
+
+.app-notice.is-success {
+  background: var(--success);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.app-notice.is-success::before {
+  content: '✅';
+}
+
+.app-notice.is-warning {
+  background: #fce4c5;
+  color: #7a4d14;
+  border-color: rgba(122, 77, 20, 0.3);
+}
+
+.app-notice.is-warning::before {
+  content: '⚠️';
+}
+
+.app-notice.is-error {
+  background: #f7d7d7;
+  color: #742c2c;
+  border-color: rgba(116, 44, 44, 0.35);
+}
+
+.app-notice.is-error::before {
+  content: '❌';
+}
+
 a,
 button,
 input,
@@ -289,6 +346,13 @@ td {
   border-bottom: 1px solid var(--surface-alt);
 }
 
+.table-placeholder {
+  text-align: center;
+  padding: 1.75rem 1rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
 th {
   color: var(--text-secondary);
   font-weight: 600;
@@ -319,6 +383,31 @@ th {
   color: #5c3d2c;
 }
 
+.badge.cancelled {
+  background: #fde2e2;
+  color: #8c2d2d;
+}
+
+.badge.ready {
+  background: #e1f0ff;
+  color: #2b4d82;
+}
+
+.badge.unknown {
+  background: var(--surface-alt);
+  color: var(--text-secondary);
+}
+
+.badge.available {
+  background: #d9f6f0;
+  color: #0f6653;
+}
+
+.badge.out_of_stock {
+  background: #f7d7d7;
+  color: #742c2c;
+}
+
 .order-items {
   display: flex;
   flex-wrap: wrap;
@@ -334,6 +423,16 @@ th {
 .menu-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+.menu-item-cell {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.menu-item-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 .icon-btn {
@@ -357,6 +456,11 @@ th {
   padding: 1.5rem;
   display: grid;
   gap: 1rem;
+}
+
+.profile-card ul {
+  list-style: none;
+  padding: 0;
 }
 
 .profile-card h3 {
@@ -392,6 +496,11 @@ ul {
   color: var(--text-secondary);
   display: grid;
   gap: 0.5rem;
+}
+
+.muted {
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .dialog-form {

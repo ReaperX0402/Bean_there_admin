@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html
+  lang="en"
+  data-supabase-url="YOUR_SUPABASE_URL"
+  data-supabase-anon-key="YOUR_SUPABASE_ANON_KEY"
+>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bean There Admin</title>
+    <!-- Replace the data attributes on the <html> element with your Supabase project URL and anon key. -->
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,6 +18,7 @@
     />
   </head>
   <body>
+    <div id="app-notice" class="app-notice hidden" role="status"></div>
     <main class="app-shell">
       <section class="auth-panel" id="auth-panel">
         <div class="auth-card" id="login-card">
@@ -114,15 +120,16 @@
           </header>
 
           <section id="section-orders" class="page-section">
-            <div class="card">
-              <header class="card-header">
-                <h2>Active orders</h2>
-                <div class="card-actions">
-                  <button class="chip" data-status="pending">Pending</button>
-                  <button class="chip" data-status="in_progress">In progress</button>
-                  <button class="chip" data-status="completed">Completed</button>
-                </div>
-              </header>
+          <div class="card">
+            <header class="card-header">
+              <h2>Active orders</h2>
+              <div class="card-actions">
+                <button class="chip active" data-status="all">All</button>
+                <button class="chip" data-status="pending">Pending</button>
+                <button class="chip" data-status="in_progress">In progress</button>
+                <button class="chip" data-status="completed">Completed</button>
+              </div>
+            </header>
               <div class="table-wrapper">
                 <table>
                   <thead>
@@ -183,7 +190,7 @@
                     </div>
                     <div>
                       <dt>Role</dt>
-                      <dd>Super admin</dd>
+                      <dd id="profile-role">Super admin</dd>
                     </div>
                   </dl>
                 </div>
