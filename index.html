@@ -1,14 +1,10 @@
 <!DOCTYPE html>
-<html
-  lang="en"
-  data-supabase-url="YOUR_SUPABASE_URL"
-  data-supabase-anon-key="YOUR_SUPABASE_ANON_KEY"
->
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bean There Admin</title>
-    <!-- Replace the data attributes on the <html> element with your Supabase project URL and anon key. -->
+      <!-- Provide Supabase credentials via `supabase_config.js` before loading the app script. -->
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -243,6 +239,8 @@
       </form>
     </dialog>
 
+    <!-- Load credentials from the local `supabase_config.js` file before the main app bundle. -->
+    <script src="supabase_config.js"></script>
     <script src="app.js" type="module"></script>
   </body>
 </html>

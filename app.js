@@ -88,7 +88,9 @@ const resolveSupabaseConfig = () => {
   const url = attrUrl && attrUrl !== 'YOUR_SUPABASE_URL' ? attrUrl : window.SUPABASE_URL || window?.SUPABASE_CONFIG?.url;
   const key = attrKey && attrKey !== 'YOUR_SUPABASE_ANON_KEY' ? attrKey : window.SUPABASE_ANON_KEY || window?.SUPABASE_CONFIG?.anonKey;
   if (!url || !key) {
-    console.warn('Supabase URL or anon key is missing. Update the <html> data attributes or provide window.SUPABASE_URL / window.SUPABASE_ANON_KEY.');
+    console.warn(
+      'Supabase URL or anon key is missing. Set them in `supabase_config.js`, or define window.SUPABASE_URL / window.SUPABASE_ANON_KEY before loading app.js.'
+    );
     return null;
   }
   return { url, key };
