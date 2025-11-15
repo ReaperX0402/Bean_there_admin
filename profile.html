@@ -12,10 +12,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bean There Admin · Orders</title>
+    <title>Bean There Admin · Profile</title>
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/dashboard.css" />
-    <link rel="stylesheet" href="css/home.css" />
+    <link rel="stylesheet" href="css/profile.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -53,45 +53,46 @@
       <section class="dashboard-content">
         <header class="page-header">
           <div>
-            <h1>Orders</h1>
+            <h1>Profile</h1>
             <p class="page-subtitle">
-              Monitor live orders pulled directly from the Supabase <code>orders</code> and
-              <code>order_items</code> tables.
+              Review your admin identity sourced from Supabase auth and <code>staff</code> metadata.
             </p>
           </div>
-          <div class="status-badge" id="connection-status">Awaiting Supabase connection</div>
         </header>
 
-        <section aria-labelledby="orders-heading" class="card order-table">
-          <header class="card-header">
-            <h2 id="orders-heading">Active orders</h2>
-            <div class="order-filters">
-              <button class="chip active" data-status="all">All</button>
-              <button class="chip" data-status="pending">Pending</button>
-              <button class="chip" data-status="in_progress">In progress</button>
-              <button class="chip" data-status="completed">Completed</button>
+        <section class="card">
+          <div class="profile-grid">
+            <div class="profile-card">
+              <h2>Account details</h2>
+              <dl>
+                <div>
+                  <dt>Name</dt>
+                  <dd id="profile-name">Loading…</dd>
+                </div>
+                <div>
+                  <dt>Email</dt>
+                  <dd id="profile-email">Loading…</dd>
+                </div>
+                <div>
+                  <dt>Role</dt>
+                  <dd id="profile-role">Loading…</dd>
+                </div>
+              </dl>
             </div>
-          </header>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                  <th>Placed at</th>
-                  <th>Items</th>
-                </tr>
-              </thead>
-              <tbody id="orders-table-body"></tbody>
-            </table>
+            <div class="profile-card">
+              <h2>Assigned stores</h2>
+              <ul id="profile-stores"></ul>
+            </div>
+            <div class="profile-card">
+              <h2>Recent activity</h2>
+              <ul id="profile-activity"></ul>
+            </div>
           </div>
         </section>
       </section>
     </main>
 
     <script src="supabase_config.js"></script>
-    <script src="js/dashboard/home.js" type="module"></script>
+    <script src="js/dashboard/profile.js" type="module"></script>
   </body>
 </html>
