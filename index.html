@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bean There Admin</title>
+      <!-- Provide Supabase credentials via `supabase_config.js` before loading the app script. -->
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app-notice" class="app-notice hidden" role="status"></div>
+    <main class="app-shell">
+      <section class="auth-panel" id="auth-panel">
+        <div class="auth-card" id="login-card">
+          <h1 class="brand">
+            <span class="brand-accent">Bean</span> There Admin
+          </h1>
+          <p class="auth-subtitle">Welcome back! Please log in to continue.</p>
+          <form id="login-form" class="auth-form" autocomplete="on">
+            <label class="form-field">
+              <span>Email</span>
+              <input type="email" name="email" placeholder="admin@beanthere.com" required />
+            </label>
+            <label class="form-field">
+              <span>Password</span>
+              <input type="password" name="password" placeholder="••••••••" required />
+            </label>
+            <button type="submit" class="primary-btn">Log in</button>
+          </form>
+          <p class="auth-switch">
+            New to Bean There?
+            <button type="button" class="link-btn" data-target="signup">Create an account</button>
+          </p>
+        </div>
+
+        <div class="auth-card hidden" id="signup-card">
+          <h1 class="brand">
+            <span class="brand-accent">Bean</span> There Admin
+          </h1>
+          <p class="auth-subtitle">Create an account to manage your café.</p>
+          <form id="signup-form" class="auth-form">
+            <div class="form-row">
+              <label class="form-field">
+                <span>First name</span>
+                <input type="text" name="firstName" placeholder="Alex" required />
+              </label>
+              <label class="form-field">
+                <span>Last name</span>
+                <input type="text" name="lastName" placeholder="Rivera" required />
+              </label>
+            </div>
+            <label class="form-field">
+              <span>Email</span>
+              <input type="email" name="email" placeholder="admin@beanthere.com" required />
+            </label>
+            <label class="form-field">
+              <span>Password</span>
+              <input type="password" name="password" placeholder="Create a strong password" required />
+            </label>
+            <label class="form-field">
+              <span>Confirm password</span>
+              <input type="password" name="confirmPassword" placeholder="Repeat your password" required />
+            </label>
+            <button type="submit" class="primary-btn">Sign up</button>
+          </form>
+          <p class="auth-switch">
+            Already have an account?
+            <button type="button" class="link-btn" data-target="login">Log in</button>
+          </p>
+        </div>
+      </section>
+
+      <section class="dashboard hidden" id="dashboard">
+        <aside class="sidebar" aria-label="Admin navigation">
+          <div class="sidebar-header">
+            <h2 class="brand">
+              <span class="brand-accent">Bean</span> There
+            </h2>
+            <p class="sidebar-subtitle">Admin console</p>
+          </div>
+          <nav class="sidebar-nav">
+            <button class="nav-item active" data-section="orders">
+              <span class="nav-icon" aria-hidden="true">📦</span>
+              Orders
+            </button>
+            <button class="nav-item" data-section="menu">
+              <span class="nav-icon" aria-hidden="true">☕</span>
+              Edit menu
+            </button>
+            <button class="nav-item" data-section="profile">
+              <span class="nav-icon" aria-hidden="true">👤</span>
+              Profile
+            </button>
+          </nav>
+          <div class="sidebar-footer">
+            <button id="logout-btn" class="secondary-btn">Log out</button>
+          </div>
+        </aside>
+
+        <div class="dashboard-content">
+          <header class="page-header">
+            <div>
+              <h1 id="page-title">Orders</h1>
+              <p class="page-subtitle">
+                Monitor live orders from the Supabase <code>orders</code> and <code>order_items</code>
+                entities.
+              </p>
+            </div>
+            <div class="status-badge">Connected to Supabase</div>
+          </header>
+
+          <section id="section-orders" class="page-section">
+          <div class="card">
+            <header class="card-header">
+              <h2>Active orders</h2>
+              <div class="card-actions">
+                <button class="chip active" data-status="all">All</button>
+                <button class="chip" data-status="pending">Pending</button>
+                <button class="chip" data-status="in_progress">In progress</button>
+                <button class="chip" data-status="completed">Completed</button>
+              </div>
+            </header>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Customer</th>
+                      <th>Status</th>
+                      <th>Total</th>
+                      <th>Placed at</th>
+                      <th>Items</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orders-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-menu" class="page-section hidden">
+            <div class="card">
+              <header class="card-header">
+                <h2>Menu builder</h2>
+                <button class="primary-btn" id="add-menu-item">Add item</button>
+              </header>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Menu item</th>
+                      <th>Category</th>
+                      <th>Price</th>
+                      <th>Availability</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="menu-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="section-profile" class="page-section hidden">
+            <div class="card">
+              <header class="card-header">
+                <h2>Admin profile</h2>
+              </header>
+              <div class="profile-grid">
+                <div class="profile-card">
+                  <h3>Account details</h3>
+                  <dl>
+                    <div>
+                      <dt>Name</dt>
+                      <dd id="profile-name">Alex Rivera</dd>
+                    </div>
+                    <div>
+                      <dt>Email</dt>
+                      <dd id="profile-email">admin@beanthere.com</dd>
+                    </div>
+                    <div>
+                      <dt>Role</dt>
+                      <dd id="profile-role">Super admin</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div class="profile-card">
+                  <h3>Assigned stores</h3>
+                  <ul id="profile-stores"></ul>
+                </div>
+                <div class="profile-card">
+                  <h3>Recent activity</h3>
+                  <ul id="profile-activity"></ul>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="menu-dialog">
+      <form method="dialog" class="dialog-form" id="menu-form">
+        <header class="dialog-header">
+          <h2 id="menu-dialog-title">Add menu item</h2>
+          <button type="submit" class="icon-btn" value="cancel" aria-label="Close dialog">✕</button>
+        </header>
+        <div class="dialog-body">
+          <label class="form-field">
+            <span>Item name</span>
+            <input type="text" name="itemName" placeholder="Iced Mocha" required />
+          </label>
+          <label class="form-field">
+            <span>Category</span>
+            <input type="text" name="category" placeholder="Beverage" required />
+          </label>
+          <label class="form-field">
+            <span>Price</span>
+            <input type="number" name="price" placeholder="4.50" step="0.01" min="0" required />
+          </label>
+          <label class="form-field">
+            <span>Status</span>
+            <select name="status">
+              <option value="available">Available</option>
+              <option value="out_of_stock">Out of stock</option>
+            </select>
+          </label>
+        </div>
+        <footer class="dialog-footer">
+          <button value="cancel" class="secondary-btn">Cancel</button>
+          <button value="confirm" class="primary-btn">Save item</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <!-- Load credentials from the local `supabase_config.js` file before the main app bundle. -->
+    <script src="supabase_config.js"></script>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
