@@ -1,9 +1,15 @@
-import { getSupabaseClient, getCurrentSession, cacheSession } from '../common/supabaseClient.js';
+import {
+  getSupabaseClient,
+  getCurrentAdminSession,
+  cacheAdminSession,
+  getAdminTableName
+} from '../common/supabaseClient.js';
 import { showNotice, setFormLoading, hideNotice } from '../common/ui.js';
 
 const loginForm = document.getElementById('login-form');
 
 const supabase = getSupabaseClient();
+const ADMIN_TABLE = getAdminTableName();
 
 const prefillFromQuery = () => {
   if (!loginForm) return;
@@ -54,8 +60,8 @@ const initialize = async () => {
     return;
   }
 
-  const session = await getCurrentSession();
-  if (session?.user) {
+  const session = await getCurrentAdminSession();
+  if (session?.admin) {
     window.location.replace('index.html');
   }
 };
@@ -77,18 +83,37 @@ if (loginForm) {
     try {
       hideNotice();
       setFormLoading(loginForm, true);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      if (data.session?.user) {
-        cacheSession(data.session);
-        showNotice('Logged in successfully.', 'success');
-        window.location.replace('index.html');
-      } else {
-        showNotice('Login succeeded, redirecting…', 'info');
-        window.location.replace('index.html');
+      const { data, error } = await supabase
+        .from(ADMIN_TABLE)
+        .select('id, cafe_id, name, email, pwd, created_at')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Database error while verifying admin credentials', error);
+        showNotice(
+          'Unable to check your credentials because of a database issue. Please try again later.',
+          'error'
+        );
+        return;
       }
+
+      const storedPassword = data?.pwd != null ? String(data.pwd) : '';
+      if (!data || storedPassword !== password) {
+        showNotice('Incorrect email or password. Please try again.', 'error');
+        return;
+      }
+
+      const { pwd, ...admin } = data;
+      const normalizedAdmin = {
+        ...admin,
+        admin_id: admin?.id ?? admin?.admin_id
+      };
+      cacheAdminSession(normalizedAdmin);
+      showNotice('Logged in successfully.', 'success');
+      window.location.replace('index.html');
     } catch (error) {
-      console.error('Unable to sign in with Supabase', error);
+      console.error('Unable to sign in with Supabase admin table', error);
       showNotice(error?.message || 'Unable to sign in with Supabase.', 'error');
     } finally {
       setFormLoading(loginForm, false);
