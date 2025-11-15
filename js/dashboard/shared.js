@@ -1,5 +1,6 @@
 import {
   getSupabaseClient,
+  getSupabaseConfig,
   requireAdminSession,
   signOut,
   getCachedAdminSession
@@ -52,8 +53,9 @@ const bindLogout = () => {
 };
 
 export const initializeDashboardPage = async (activeSection) => {
+  const supabaseConfig = getSupabaseConfig();
   const supabase = getSupabaseClient();
-  if (!supabase) {
+  if (!supabase || !supabaseConfig) {
     showNotice(
       'Supabase credentials are missing. Update `supabase_config.js` before using the admin console.',
       'error',

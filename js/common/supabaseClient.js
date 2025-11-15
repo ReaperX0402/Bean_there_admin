@@ -4,6 +4,8 @@ let cachedClient = null;
 let storageSupported = null;
 
 const SESSION_STORAGE_KEY = 'bt-admin-session';
+const PLACEHOLDER_URL = 'YOUR_SUPABASE_URL';
+const PLACEHOLDER_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 const storageAvailable = () => {
   if (storageSupported !== null) return storageSupported;
@@ -88,30 +90,51 @@ export const getAdminTableName = () => {
   return table && table.length ? table : 'admin';
 };
 
-const resolveSupabaseConfig = () => {
-  const root = document.documentElement;
-  const attrUrl = root.dataset.supabaseUrl?.trim();
-  const attrKey = root.dataset.supabaseAnonKey?.trim();
-  const url = attrUrl && attrUrl !== 'YOUR_SUPABASE_URL'
-    ? attrUrl
-    : window.SUPABASE_URL || window?.SUPABASE_CONFIG?.url;
-  const anonKey = attrKey && attrKey !== 'YOUR_SUPABASE_ANON_KEY'
-    ? attrKey
-    : window.SUPABASE_ANON_KEY || window?.SUPABASE_CONFIG?.anonKey;
+const sanitizeCredential = (value, placeholder) => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed || (placeholder && trimmed === placeholder)) return '';
+  return trimmed;
+};
 
-  if (!url || !anonKey) {
-    console.warn(
-      'Supabase URL or anon key is missing. Provide credentials in `supabase_config.js` or via <html> data attributes.'
-    );
-    return null;
-  }
+const getConfigFromWindow = () => {
+  const config = window?.SUPABASE_CONFIG;
+  if (!config || typeof config !== 'object') return null;
 
+  const url = sanitizeCredential(config.url, PLACEHOLDER_URL);
+  const anonKey = sanitizeCredential(config.anonKey, PLACEHOLDER_KEY);
+
+  if (!url || !anonKey) return null;
   return { url, anonKey };
+};
+
+const getConfigFromDataset = () => {
+  const root = document.documentElement;
+  if (!root) return null;
+
+  const url = sanitizeCredential(root.dataset.supabaseUrl, PLACEHOLDER_URL);
+  const anonKey = sanitizeCredential(root.dataset.supabaseAnonKey, PLACEHOLDER_KEY);
+
+  if (!url || !anonKey) return null;
+  return { url, anonKey };
+};
+
+export const getSupabaseConfig = () => {
+  const fromWindow = getConfigFromWindow();
+  if (fromWindow) return fromWindow;
+
+  const fromDataset = getConfigFromDataset();
+  if (fromDataset) return fromDataset;
+
+  console.warn(
+    'Supabase URL or anon key is missing. Provide credentials in `supabase_config.js` to expose them via `window.SUPABASE_CONFIG` or add <html> data attributes.'
+  );
+  return null;
 };
 
 export const getSupabaseClient = () => {
   if (cachedClient) return cachedClient;
-  const config = resolveSupabaseConfig();
+  const config = getSupabaseConfig();
   if (!config) return null;
   cachedClient = createClient(config.url, config.anonKey, { auth: { persistSession: true } });
   return cachedClient;

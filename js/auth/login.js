@@ -1,5 +1,6 @@
 import {
   getSupabaseClient,
+  getSupabaseConfig,
   getCurrentAdminSession,
   cacheAdminSession,
   getAdminTableName
@@ -8,6 +9,7 @@ import { showNotice, setFormLoading, hideNotice } from '../common/ui.js';
 
 const loginForm = document.getElementById('login-form');
 
+const supabaseConfig = getSupabaseConfig();
 const supabase = getSupabaseClient();
 const ADMIN_TABLE = getAdminTableName();
 
@@ -50,7 +52,7 @@ const disableForm = () => {
 const initialize = async () => {
   prefillFromQuery();
 
-  if (!supabase) {
+  if (!supabase || !supabaseConfig) {
     showNotice(
       'Supabase credentials are missing. Update `supabase_config.js` before using the admin console.',
       'error',
