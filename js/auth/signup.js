@@ -1,4 +1,4 @@
-import { getSupabaseClient, getCurrentSession } from '../common/supabaseClient.js';
+import { getSupabaseClient, getCurrentSession, cacheSession } from '../common/supabaseClient.js';
 import { showNotice, setFormLoading, hideNotice } from '../common/ui.js';
 
 const signupForm = document.getElementById('signup-form');
@@ -70,6 +70,7 @@ if (signupForm) {
       if (error) throw error;
 
       if (data.session?.user) {
+        cacheSession(data.session);
         showNotice('Account created and signed in successfully.', 'success');
         window.location.replace('index.html');
       } else {

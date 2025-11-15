@@ -1,9 +1,36 @@
-import { getSupabaseClient, getCurrentSession } from '../common/supabaseClient.js';
+import { getSupabaseClient, getCurrentSession, cacheSession } from '../common/supabaseClient.js';
 import { showNotice, setFormLoading, hideNotice } from '../common/ui.js';
 
 const loginForm = document.getElementById('login-form');
 
 const supabase = getSupabaseClient();
+
+const prefillFromQuery = () => {
+  if (!loginForm) return;
+  try {
+    const currentUrl = new URL(window.location.href);
+    const email = currentUrl.searchParams.get('email');
+    const password = currentUrl.searchParams.get('password');
+
+    const emailField = loginForm.elements.namedItem('email');
+    if (email && emailField && 'value' in emailField) {
+      emailField.value = decodeURIComponent(email);
+    }
+
+    const passwordField = loginForm.elements.namedItem('password');
+    if (password && passwordField && 'value' in passwordField) {
+      passwordField.value = password;
+    }
+
+    if (email || password) {
+      currentUrl.searchParams.delete('email');
+      currentUrl.searchParams.delete('password');
+      window.history.replaceState({}, document.title, `${currentUrl.pathname}${currentUrl.hash}`);
+    }
+  } catch (error) {
+    console.warn('Unable to sanitize login query params', error);
+  }
+};
 
 const disableForm = () => {
   if (!loginForm) return;
@@ -15,6 +42,8 @@ const disableForm = () => {
 };
 
 const initialize = async () => {
+  prefillFromQuery();
+
   if (!supabase) {
     showNotice(
       'Supabase credentials are missing. Update `supabase_config.js` before using the admin console.',
@@ -51,6 +80,7 @@ if (loginForm) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (data.session?.user) {
+        cacheSession(data.session);
         showNotice('Logged in successfully.', 'success');
         window.location.replace('index.html');
       } else {

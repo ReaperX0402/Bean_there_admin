@@ -1,6 +1,69 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 let cachedClient = null;
+let storageSupported = null;
+
+const SESSION_STORAGE_KEY = 'bt-admin-session';
+
+const storageAvailable = () => {
+  if (storageSupported !== null) return storageSupported;
+  try {
+    const testKey = '__bt-admin-session-test__';
+    window.sessionStorage.setItem(testKey, '1');
+    window.sessionStorage.removeItem(testKey);
+    storageSupported = true;
+  } catch (error) {
+    storageSupported = false;
+  }
+  return storageSupported;
+};
+
+const serializeSession = (session) => {
+  if (!session?.user) return null;
+  const { user } = session;
+  const { id, email, phone, user_metadata: userMetadata, app_metadata: appMetadata, aud, role } = user;
+  return {
+    user: {
+      id,
+      email: email || null,
+      phone: phone || null,
+      aud: aud || null,
+      role: role || null,
+      user_metadata: userMetadata || {},
+      app_metadata: appMetadata || {}
+    }
+  };
+};
+
+export const cacheSession = (session) => {
+  if (!storageAvailable()) return;
+  if (!session?.user) {
+    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    return;
+  }
+
+  const safeSession = serializeSession(session);
+  if (!safeSession) return;
+
+  try {
+    window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(safeSession));
+  } catch (error) {
+    console.warn('Unable to persist session details', error);
+  }
+};
+
+export const getCachedSession = () => {
+  if (!storageAvailable()) return null;
+  const cached = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+  if (!cached) return null;
+  try {
+    return JSON.parse(cached);
+  } catch (error) {
+    console.warn('Unable to parse cached session, clearing it', error);
+    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    return null;
+  }
+};
 
 const resolveSupabaseConfig = () => {
   const root = document.documentElement;
@@ -45,7 +108,11 @@ export const getCurrentSession = async () => {
   try {
     const { data, error } = await client.auth.getSession();
     if (error) throw error;
-    return data?.session ?? null;
+    const session = data?.session ?? null;
+    if (session?.user) {
+      cacheSession(session);
+    }
+    return session;
   } catch (error) {
     console.warn('Unable to fetch Supabase session', error);
     return null;
@@ -55,6 +122,7 @@ export const getCurrentSession = async () => {
 export const requireSession = async () => {
   const session = await getCurrentSession();
   if (!session?.user) {
+    cacheSession(null);
     window.location.replace('login.html');
     return null;
   }
@@ -66,6 +134,7 @@ export const signOut = async () => {
   if (!client) return;
   try {
     await client.auth.signOut();
+    cacheSession(null);
   } catch (error) {
     console.warn('Error during Supabase sign-out', error);
   }

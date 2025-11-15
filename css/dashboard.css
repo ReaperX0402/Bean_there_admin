@@ -71,6 +71,27 @@ body {
   padding-top: 1.5rem;
 }
 
+.sidebar-session {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  color: rgba(253, 250, 244, 0.75);
+  font-size: 0.85rem;
+}
+
+.sidebar-session .session-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+  color: rgba(253, 250, 244, 0.6);
+}
+
+.sidebar-session .session-value {
+  font-weight: 600;
+  color: #fff;
+  word-break: break-word;
+}
+
 .dashboard-content {
   padding: 2.5rem 3rem;
   display: grid;
