@@ -1,0 +1,9 @@
+.order-filters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.order-table {
+  overflow-x: auto;
+}

@@ -1,0 +1,8 @@
+dialog::backdrop {
+  background: rgba(31, 27, 22, 0.35);
+}
+
+.menu-helper {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
