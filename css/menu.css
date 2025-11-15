@@ -6,3 +6,9 @@ dialog::backdrop {
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
+
+.menu-item-description {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}

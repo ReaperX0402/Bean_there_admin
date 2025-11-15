@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html
   lang="en"
-  data-table-orders="orders"
-  data-table-order-items="order_items"
-  data-table-menu-items="menu_items"
-  data-table-staff="staff"
-  data-table-staff-stores="staff_store_assignments"
-  data-table-stores="stores"
-  data-table-staff-activity="staff_activity_logs"
+  data-table-admin="admin"
+  data-table-orders="order"
+  data-table-order-items="order_item"
+  data-table-items="item"
+  data-table-menu-items="item"
 >
   <head>
     <meta charset="UTF-8" />
@@ -31,7 +29,7 @@
         </h1>
         <p class="auth-subtitle">Welcome back! Please log in to continue.</p>
       </div>
-      <form id="login-form" class="auth-form" autocomplete="on">
+      <form id="login-form" class="auth-form" autocomplete="on" method="post">
         <label class="form-field">
           <span>Email</span>
           <input type="email" name="email" placeholder="admin@beanthere.com" required />
