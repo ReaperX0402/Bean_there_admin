@@ -1,4 +1,9 @@
-import { getSupabaseClient, requireSession, signOut, getCachedSession } from '../common/supabaseClient.js';
+import {
+  getSupabaseClient,
+  requireAdminSession,
+  signOut,
+  getCachedAdminSession
+} from '../common/supabaseClient.js';
 import { showNotice } from '../common/ui.js';
 
 const setActiveNav = (active) => {
@@ -9,19 +14,18 @@ const setActiveNav = (active) => {
   });
 };
 
-const renderSessionUser = (session) => {
-  const container = document.getElementById('session-user');
+const renderSessionAdmin = (session) => {
+  const container = document.getElementById('session-admin');
   if (!container) return;
 
-  if (!session?.user) {
+  if (!session?.admin) {
     container.classList.add('hidden');
     container.innerHTML = '';
     return;
   }
 
-  const { user } = session;
-  const displayName =
-    user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.phone || 'Signed in';
+  const { admin } = session;
+  const displayName = admin.name || admin.email || `Admin #${admin.admin_id}`;
 
   container.classList.remove('hidden');
   container.innerHTML = '';
@@ -54,16 +58,15 @@ export const initializeDashboardPage = async (activeSection) => {
       'error',
       true
     );
-    return { supabase: null, session: null };
   }
 
-  renderSessionUser(getCachedSession());
-  const session = await requireSession();
+  renderSessionAdmin(getCachedAdminSession());
+  const session = await requireAdminSession();
   if (!session) {
     return { supabase, session: null };
   }
 
-  renderSessionUser(session);
+  renderSessionAdmin(session);
   setActiveNav(activeSection);
   bindLogout();
   return { supabase, session };

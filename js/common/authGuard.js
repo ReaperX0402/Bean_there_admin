@@ -23,7 +23,7 @@
       return;
     }
 
-    if (!parsed?.user?.id) {
+    if (!parsed?.admin?.admin_id) {
       redirectToLogin();
       return;
     }
