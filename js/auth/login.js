@@ -87,7 +87,7 @@ if (loginForm) {
       setFormLoading(loginForm, true);
       const { data, error } = await supabase
         .from(ADMIN_TABLE)
-        .select('id, cafe_id, name, email, pwd, created_at')
+        .select('id, admin_id, cafe_id, name, email, pwd, created_at')
         .eq('email', email)
         .maybeSingle();
 
