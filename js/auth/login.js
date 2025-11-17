@@ -9,8 +9,8 @@ import { showNotice, setFormLoading, hideNotice } from '../common/ui.js';
 
 const loginForm = document.getElementById('login-form');
 
-const supabaseConfig = getSupabaseConfig();
-const supabase = getSupabaseClient();
+let supabaseConfig = null;
+let supabase = null;
 const ADMIN_TABLE = getAdminTableName();
 
 const prefillFromQuery = () => {
