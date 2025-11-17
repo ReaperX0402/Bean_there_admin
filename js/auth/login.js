@@ -52,9 +52,12 @@ const disableForm = () => {
 const initialize = async () => {
   prefillFromQuery();
 
-  if (!supabase || !supabaseConfig) {
+  try {
+    supabaseConfig = getSupabaseConfig();
+    supabase = getSupabaseClient(); // ✱ CHANGE: throws if not configured
+  } catch (e) {
     showNotice(
-      'Supabase credentials are missing. Update `supabase_config.js` before using the admin console.',
+      'Supabase credentials are missing. Update `supabase_config.js` or <html> data attributes before using the admin console.',
       'error',
       true
     );
@@ -109,7 +112,8 @@ if (loginForm) {
       const { pwd, ...admin } = data;
       const normalizedAdmin = {
         ...admin,
-        admin_id: admin?.id ?? admin?.admin_id
+        admin_id: admin.id,
+        id: admin.id
       };
       cacheAdminSession(normalizedAdmin);
       showNotice('Logged in successfully.', 'success');

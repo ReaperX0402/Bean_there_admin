@@ -10,6 +10,7 @@ const PLACEHOLDER_KEY = 'YOUR_SUPABASE_ANON_KEY';
 const storageAvailable = () => {
   if (storageSupported !== null) return storageSupported;
   try {
+    if (typeof window === 'undefined') return false;
     const testKey = '__bt-admin-session-test__';
     window.sessionStorage.setItem(testKey, '1');
     window.sessionStorage.removeItem(testKey);
@@ -21,7 +22,7 @@ const storageAvailable = () => {
 };
 
 const serializeAdmin = (admin) => {
-  const adminId = admin?.id ?? admin?.admin_id;
+  const adminId = admin?.admin_id ?? admin?.id; 
   if (!adminId) return null;
   const { cafe_id = null, name = null, email = null, created_at = null } = admin;
   return {
@@ -79,13 +80,16 @@ export const requireAdminSession = async () => {
   const hasId = Boolean(session?.admin?.id || session?.admin?.admin_id);
   if (!hasId) {
     clearAdminSession();
-    window.location.replace('login.html');
+    if (typeof window !== 'undefined') {           // ✱ CHANGE: SSR guard
+      window.location.replace('login.html');
+    }
     return null;
   }
   return session;
 };
 
 export const getAdminTableName = () => {
+  if (typeof document === 'undefined') return 'admin';
   const table = document.documentElement.dataset.tableAdmin?.trim();
   return table && table.length ? table : 'admin';
 };
@@ -98,6 +102,7 @@ const sanitizeCredential = (value, placeholder) => {
 };
 
 const getConfigFromWindow = () => {
+  if (typeof window === 'undefined') return null;
   const config = window?.SUPABASE_CONFIG;
   if (!config || typeof config !== 'object') return null;
 
