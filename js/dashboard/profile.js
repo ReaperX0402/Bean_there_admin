@@ -45,8 +45,8 @@ const fetchLatestAdminRecord = async (admin) => {
 
   const { data, error } = await supabaseClient
     .from(ADMIN_TABLE)
-    .select('id, cafe_id, name, email, created_at')
-    .eq('id', adminId)
+    .select('id:admin_id, cafe_id, name, email, created_at')
+    .eq('admin_id', adminId)
     .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {
