@@ -1,33 +1,27 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 let cachedClient = null;
-let storageSupported = null;
 
-const SESSION_STORAGE_KEY = 'bt-admin-session';
+const STORAGE_KEY = 'bt-admin-session';
 const PLACEHOLDER_URL = 'YOUR_SUPABASE_URL';
 const PLACEHOLDER_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
-const storageAvailable = () => {
-  if (storageSupported !== null) return storageSupported;
-  try {
-    if (typeof window === 'undefined') return false;
-    const testKey = '__bt-admin-session-test__';
-    window.sessionStorage.setItem(testKey, '1');
-    window.sessionStorage.removeItem(testKey);
-    storageSupported = true;
-  } catch (error) {
-    storageSupported = false;
-  }
-  return storageSupported;
+// ---------- storage (session first, fallback to local) ----------
+const getStore = () => {
+  if (typeof window === 'undefined') return null;
+  try { window.sessionStorage.setItem('__t','1'); window.sessionStorage.removeItem('__t'); return window.sessionStorage; } catch {}
+  try { window.localStorage.setItem('__t','1'); window.localStorage.removeItem('__t'); return window.localStorage; } catch {}
+  return null;
 };
 
+// ---------- session serialize ----------
 const serializeAdmin = (admin) => {
-  const adminId = admin?.admin_id ?? admin?.id; 
+  const adminId = admin?.admin_id ?? admin?.id;
   if (!adminId) return null;
   const { cafe_id = null, name = null, email = null, created_at = null } = admin;
   return {
     admin: {
-      id: adminId,
+      id: adminId,          // keep both keys populated
       admin_id: adminId,
       cafe_id,
       name,
@@ -38,41 +32,44 @@ const serializeAdmin = (admin) => {
 };
 
 export const cacheAdminSession = (adminOrSession) => {
-  if (!storageAvailable()) return;
+  const store = getStore();
+  if (!store) return;
 
   const session = adminOrSession?.admin ? adminOrSession.admin : adminOrSession;
   const serialized = serializeAdmin(session);
 
   if (!serialized) {
-    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    store.removeItem(STORAGE_KEY);
     return;
   }
-
   try {
-    window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(serialized));
+    store.setItem(STORAGE_KEY, JSON.stringify(serialized));
   } catch (error) {
     console.warn('Unable to persist admin session details', error);
   }
 };
 
 export const clearAdminSession = () => {
-  if (!storageAvailable()) return;
-  window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+  const store = getStore();
+  if (!store) return;
+  store.removeItem(STORAGE_KEY);
 };
 
 export const getCachedAdminSession = () => {
-  if (!storageAvailable()) return null;
-  const cached = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+  const store = getStore();
+  if (!store) return null;
+  const cached = store.getItem(STORAGE_KEY);
   if (!cached) return null;
   try {
     return JSON.parse(cached);
   } catch (error) {
     console.warn('Unable to parse cached admin session, clearing it', error);
-    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    store.removeItem(STORAGE_KEY);
     return null;
   }
 };
 
+// For this MVP you’re using table-based “auth”; cache is the source of truth
 export const getCurrentAdminSession = async () => getCachedAdminSession();
 
 export const requireAdminSession = async () => {
@@ -80,8 +77,10 @@ export const requireAdminSession = async () => {
   const hasId = Boolean(session?.admin?.id || session?.admin?.admin_id);
   if (!hasId) {
     clearAdminSession();
-    if (typeof window !== 'undefined') {           // ✱ CHANGE: SSR guard
-      window.location.replace('login.html');
+    if (typeof window !== 'undefined') {
+      // default to a login in the same folder as current page
+      const loginUrl = new URL('login.html', window.location.href).toString();
+      window.location.replace(loginUrl);
     }
     return null;
   }
@@ -94,6 +93,7 @@ export const getAdminTableName = () => {
   return table && table.length ? table : 'admin';
 };
 
+// ---------- config ----------
 const sanitizeCredential = (value, placeholder) => {
   if (typeof value !== 'string') return '';
   const trimmed = value.trim();
@@ -103,7 +103,7 @@ const sanitizeCredential = (value, placeholder) => {
 
 const getConfigFromWindow = () => {
   if (typeof window === 'undefined') return null;
-  const config = window?.SUPABASE_CONFIG;
+  const config = window.SUPABASE_CONFIG;
   if (!config || typeof config !== 'object') return null;
 
   const url = sanitizeCredential(config.url, PLACEHOLDER_URL);
@@ -114,6 +114,7 @@ const getConfigFromWindow = () => {
 };
 
 const getConfigFromDataset = () => {
+  if (typeof document === 'undefined') return null;
   const root = document.documentElement;
   if (!root) return null;
 
@@ -137,22 +138,30 @@ export const getSupabaseConfig = () => {
   return null;
 };
 
+// ---------- client ----------
 export const getSupabaseClient = () => {
   if (cachedClient) return cachedClient;
   const config = getSupabaseConfig();
-  if (!config) return null;
-  cachedClient = createClient(config.url, config.anonKey, { auth: { persistSession: true } });
+  if (!config) throw new Error('Supabase client not configured'); // be loud
+
+  cachedClient = createClient(config.url, config.anonKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
   return cachedClient;
 };
 
 export const requireSupabaseClient = () => {
-  const client = getSupabaseClient();
-  if (!client) {
-    throw new Error('Supabase client not configured');
-  }
+  const client = getSupabaseClient(); // throws if missing
   return client;
 };
 
 export const signOut = async () => {
-  clearAdminSession();
+  try {
+    const client = cachedClient ?? null;
+    await client?.auth?.signOut?.();
+  } catch (e) {
+    console.warn('Supabase signOut failed/ignored', e);
+  } finally {
+    clearAdminSession();
+  }
 };
