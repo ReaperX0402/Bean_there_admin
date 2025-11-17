@@ -22,29 +22,7 @@ const setLoadingState = () => {
 
 const renderCafeDetails = (cafeId, cafeDetails) => {
   if (!profileCafe) return;
-  profileCafe.innerHTML = '';
-
-  if (!cafeId) {
-    profileCafe.textContent = '—';
-    return;
-  }
-
-  const cafeWrapper = document.createElement('div');
-  cafeWrapper.className = 'profile-cafe-details';
-
-  if (cafeDetails?.name) {
-    const cafeName = document.createElement('span');
-    cafeName.className = 'profile-cafe-name';
-    cafeName.textContent = cafeDetails.name;
-    cafeWrapper.appendChild(cafeName);
-  }
-
-  const cafeIdPill = document.createElement('span');
-  cafeIdPill.className = 'profile-cafe-id';
-  cafeIdPill.textContent = cafeId;
-  cafeWrapper.appendChild(cafeIdPill);
-
-  profileCafe.appendChild(cafeWrapper);
+  profileCafe.textContent = cafeDetails?.name ?? (cafeId || '—');
 };
 
 const populateProfile = (admin, cafeDetails = null) => {
@@ -55,8 +33,9 @@ const populateProfile = (admin, cafeDetails = null) => {
   if (profileCreated) profileCreated.textContent = formatDateTime(admin.created_at);
   if (profileNotes) {
     const fallbackLabel = admin.cafe_id ? `café ${admin.cafe_id}` : 'your café';
-    const cafeLabel = cafeDetails?.name && admin.cafe_id ? `${cafeDetails.name} (${admin.cafe_id})` : fallbackLabel;
-    profileNotes.textContent = `Details reflect the current admin record for ${cafeLabel}.`;
+    const cafeLabel = cafeDetails?.name?? (admin.cafe_id ? `café ${admin.cafe_id}` : 'your café');
+   profileNotes.textContent = `Details reflect the current admin record for ${cafeLabel}.`;
+    profileNotes.textContent = `Details reflect the current admin record for ${cafeLabel}.`
   }
 };
 
@@ -66,8 +45,8 @@ const fetchLatestAdminRecord = async (admin) => {
 
   const { data, error } = await supabaseClient
     .from(ADMIN_TABLE)
-    .select('id, cafe_id, name, email, created_at')
-    .eq('id', adminId)
+    .select('id:admin_id, cafe_id, name, email, created_at')
+    .eq('admin_id', adminId)
     .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {

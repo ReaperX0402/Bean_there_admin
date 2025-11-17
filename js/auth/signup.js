@@ -53,7 +53,7 @@ const populateCafeSelect = (cafes) => {
     if (!cafeId) return;
     const option = document.createElement('option');
     option.value = cafeId;
-    option.textContent = cafe.name ? `${cafe.name} (${cafeId})` : cafeId;
+    option.textContent = cafe.name ? `${cafe.name}` : cafeId;
     cafeSelect.append(option);
   });
 
@@ -136,7 +136,7 @@ if (signupForm) {
             pwd: password
           }
         ])
-        .select('id, cafe_id, name, email, created_at')
+        .select('admin_id, cafe_id, name, email, created_at')
         .single();
 
       if (error) {
