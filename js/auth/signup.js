@@ -49,10 +49,11 @@ const populateCafeSelect = (cafes) => {
   cafeSelect.append(placeholder);
 
   cafes.forEach((cafe) => {
-    if (!cafe?.id) return;
+    const cafeId = cafe?.cafe_id;
+    if (!cafeId) return;
     const option = document.createElement('option');
-    option.value = cafe.id;
-    option.textContent = cafe.name ? `${cafe.name} (${cafe.id})` : cafe.id;
+    option.value = cafeId;
+    option.textContent = cafe.name ? `${cafe.name} (${cafeId})` : cafeId;
     cafeSelect.append(option);
   });
 
@@ -69,7 +70,7 @@ const loadCafeOptions = async () => {
   try {
     const { data, error } = await supabase
       .from(CAFES_TABLE)
-      .select('id, name')
+      .select('cafe_id, name')
       .order('name', { ascending: true });
 
     if (error) throw error;
