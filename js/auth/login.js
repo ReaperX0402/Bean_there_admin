@@ -43,9 +43,7 @@ const prefillFromQuery = () => {
 const disableForm = () => {
   if (!loginForm) return;
   Array.from(loginForm.elements).forEach((element) => {
-    if ('disabled' in element) {
-      element.disabled = true;
-    }
+    if ('disabled' in element) element.disabled = true;
   });
 };
 
@@ -54,7 +52,7 @@ const initialize = async () => {
 
   try {
     supabaseConfig = getSupabaseConfig();
-    supabase = getSupabaseClient(); // ✱ CHANGE: throws if not configured
+    supabase = getSupabaseClient(); // throws if not configured
   } catch (e) {
     showNotice(
       'Supabase credentials are missing. Update `supabase_config.js` or <html> data attributes before using the admin console.',
@@ -65,9 +63,11 @@ const initialize = async () => {
     return;
   }
 
+  // If already "logged in" via cached admin, go to index
   const session = await getCurrentAdminSession();
   if (session?.admin) {
-    window.location.replace('index.html');
+    // Use absolute path to avoid folder confusion
+    window.location.replace('/index.html');
   }
 };
 
@@ -88,9 +88,11 @@ if (loginForm) {
     try {
       hideNotice();
       setFormLoading(loginForm, true);
+
+      // CORRECT aliasing: return the table's admin_id as "id"
       const { data, error } = await supabase
         .from(ADMIN_TABLE)
-        .select('admin_id:id, cafe_id, name, email, pwd, created_at')
+        .select('id:admin_id, cafe_id, name, email, pwd, created_at')
         .eq('email', email)
         .maybeSingle();
 
@@ -109,15 +111,18 @@ if (loginForm) {
         return;
       }
 
+      // Normalize BEFORE caching so serializer sees an id
       const { pwd, ...admin } = data;
       const normalizedAdmin = {
         ...admin,
-        admin_id: admin.id,
+        admin_id: admin.id,  // keep both keys populated
         id: admin.id
       };
+
       cacheAdminSession(normalizedAdmin);
       showNotice('Logged in successfully.', 'success');
-      window.location.replace('index.html');
+
+      window.location.replace('/index.html');
     } catch (error) {
       console.error('Unable to sign in with Supabase admin table', error);
       showNotice(error?.message || 'Unable to sign in with Supabase.', 'error');
