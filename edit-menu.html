@@ -7,6 +7,7 @@
   data-table-order-items="order_item"
   data-table-items="item"
   data-table-menu-items="item"
+  data-table-menus="menu"
   data-table-cafes="cafe"
 >
   <head>
@@ -59,33 +60,68 @@
           </div>
         </header>
 
-        <section aria-labelledby="menu-heading" class="card card--menu-builder">
+        <section aria-labelledby="menus-heading" class="card card--menus">
           <header class="card-header">
-            <h2 id="menu-heading">Menu builder</h2>
-            <button class="primary-btn" id="add-menu-item">Add item</button>
+            <h2 id="menus-heading">Menus</h2>
+            <button class="secondary-btn" id="add-menu">Create menu</button>
+          </header>
+          <p class="menu-helper">
+            Create a menu for each cafe, then add menu items below.
+          </p>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Menu</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="menus-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="menu-heading" class="card card--menu-builder">
+          <header class="card-header card-header--menu-items">
+            <div>
+              <h2 id="menu-heading">Menu items</h2>
+              <p class="menu-helper" id="selected-menu-details">
+                Select a menu to view and manage its items.
+              </p>
+            </div>
+            <div class="menu-item-controls">
+              <label class="form-field form-field--inline">
+                <span>Menu</span>
+                <select id="menu-selector" disabled>
+                  <option value="">No menus available</option>
+                </select>
+              </label>
+              <button class="primary-btn" id="add-menu-item" disabled>Add item</button>
+            </div>
           </header>
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
                   <th>Menu item</th>
-                  <th>Menu ID</th>
                   <th>Price</th>
                   <th>Availability</th>
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody id="menu-table-body"></tbody>
+              <tbody id="menu-items-table-body"></tbody>
             </table>
           </div>
         </section>
       </section>
     </main>
 
-    <dialog id="menu-dialog">
-      <form method="dialog" class="dialog-form" id="menu-form">
+    <dialog id="menu-item-dialog">
+      <form method="dialog" class="dialog-form" id="menu-item-form">
         <header class="dialog-header">
-          <h2 id="menu-dialog-title">Add menu item</h2>
+          <h2 id="menu-item-dialog-title">Add menu item</h2>
           <button type="button" class="icon-btn" data-dialog-dismiss aria-label="Close dialog">✕</button>
         </header>
         <div class="dialog-body">
@@ -93,10 +129,7 @@
             <span>Item name</span>
             <input type="text" name="itemName" placeholder="Iced Mocha" required />
           </label>
-          <label class="form-field">
-            <span>Menu ID</span>
-            <input type="text" name="menuId" placeholder="1" required />
-          </label>
+          <input type="hidden" name="menuId" required />
           <label class="form-field">
             <span>Description</span>
             <textarea name="description" placeholder="Tasting notes, ingredients, etc." rows="3"></textarea>
@@ -116,6 +149,37 @@
         <footer class="dialog-footer">
           <button type="button" class="secondary-btn" data-dialog-dismiss>Cancel</button>
           <button value="confirm" class="primary-btn">Save item</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="menu-definition-dialog">
+      <form method="dialog" class="dialog-form" id="menu-definition-form">
+        <header class="dialog-header">
+          <h2 id="menu-definition-dialog-title">Create menu</h2>
+          <button type="button" class="icon-btn" data-dialog-dismiss aria-label="Close dialog">✕</button>
+        </header>
+        <div class="dialog-body">
+          <label class="form-field">
+            <span>Menu name</span>
+            <input type="text" name="menuName" placeholder="Breakfast" required />
+          </label>
+          <input type="hidden" name="cafeId" required />
+          <label class="form-field">
+            <span>Description</span>
+            <textarea name="menuDescription" placeholder="What guests should expect" rows="3"></textarea>
+          </label>
+          <label class="form-field">
+            <span>Status</span>
+            <select name="menuStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </label>
+        </div>
+        <footer class="dialog-footer">
+          <button type="button" class="secondary-btn" data-dialog-dismiss>Cancel</button>
+          <button value="confirm" class="primary-btn">Save menu</button>
         </footer>
       </form>
     </dialog>

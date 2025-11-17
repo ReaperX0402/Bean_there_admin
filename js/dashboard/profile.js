@@ -4,7 +4,7 @@ import { initializeDashboardPage } from './shared.js';
 const htmlRoot = document.documentElement;
 const profileName = document.getElementById('profile-name');
 const profileEmail = document.getElementById('profile-email');
-const profileCafe = document.getElementById('profile-cafe');
+const profileCafeName = document.getElementById('profile-cafe-name');
 const profileCreated = document.getElementById('profile-created');
 const profileNotes = document.getElementById('profile-notes');
 
@@ -16,46 +16,25 @@ let supabaseClient = null;
 const setLoadingState = () => {
   if (profileName) profileName.textContent = 'Loading…';
   if (profileEmail) profileEmail.textContent = 'Loading…';
-  if (profileCafe) profileCafe.textContent = 'Loading…';
+  if (profileCafeName) profileCafeName.textContent = 'Loading…';
   if (profileCreated) profileCreated.textContent = 'Loading…';
 };
 
-const renderCafeDetails = (cafeId, cafeDetails) => {
-  if (!profileCafe) return;
-  profileCafe.innerHTML = '';
-
-  if (!cafeId) {
-    profileCafe.textContent = '—';
-    return;
+const renderCafeDetails = (cafeDetails) => {
+  if (profileCafeName) {
+    const resolvedCafeName = cafeDetails?.name ?? '—';
+    profileCafeName.textContent = resolvedCafeName || '—';
   }
-
-  const cafeWrapper = document.createElement('div');
-  cafeWrapper.className = 'profile-cafe-details';
-
-  if (cafeDetails?.name) {
-    const cafeName = document.createElement('span');
-    cafeName.className = 'profile-cafe-name';
-    cafeName.textContent = cafeDetails.name;
-    cafeWrapper.appendChild(cafeName);
-  }
-
-  const cafeIdPill = document.createElement('span');
-  cafeIdPill.className = 'profile-cafe-id';
-  cafeIdPill.textContent = cafeId;
-  cafeWrapper.appendChild(cafeIdPill);
-
-  profileCafe.appendChild(cafeWrapper);
 };
 
 const populateProfile = (admin, cafeDetails = null) => {
   if (!admin) return;
   if (profileName) profileName.textContent = admin.name || 'Admin';
   if (profileEmail) profileEmail.textContent = admin.email || '—';
-  renderCafeDetails(admin.cafe_id, cafeDetails);
+  renderCafeDetails(cafeDetails);
   if (profileCreated) profileCreated.textContent = formatDateTime(admin.created_at);
   if (profileNotes) {
-    const fallbackLabel = admin.cafe_id ? `café ${admin.cafe_id}` : 'your café';
-    const cafeLabel = cafeDetails?.name && admin.cafe_id ? `${cafeDetails.name} (${admin.cafe_id})` : fallbackLabel;
+    const cafeLabel = cafeDetails?.name || 'your café';
     profileNotes.textContent = `Details reflect the current admin record for ${cafeLabel}.`;
   }
 };
