@@ -14,6 +14,9 @@ const menuDialog = document.getElementById('menu-dialog');
 const menuDialogTitle = document.getElementById('menu-dialog-title');
 const menuForm = document.getElementById('menu-form');
 const addMenuItemBtn = document.getElementById('add-menu-item');
+const dialogDismissButtons = menuDialog
+  ? Array.from(menuDialog.querySelectorAll('[data-dialog-dismiss]'))
+  : [];
 
 const TABLES = {
   items: htmlRoot.dataset.tableMenuItems || 'item'
@@ -276,6 +279,13 @@ const bindDialogLifecycle = () => {
   menuDialog.addEventListener('cancel', (event) => {
     event.preventDefault();
     closeMenuDialog();
+  });
+
+  dialogDismissButtons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      closeMenuDialog();
+    });
   });
 
   window.addEventListener('keydown', (event) => {
