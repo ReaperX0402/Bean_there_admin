@@ -93,9 +93,9 @@ body {
 }
 
 .dashboard-content {
-  padding: 2.5rem 3rem;
+  padding: 2.5rem 3rem 3.5rem;
   display: grid;
-  gap: 2.5rem;
+  gap: 2rem;
 }
 
 .page-header {
@@ -103,16 +103,30 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .page-header h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: clamp(1.35rem, 3vw, 1.6rem);
 }
 
 .page-subtitle {
-  margin: 0.5rem 0 0;
+  margin: 0.35rem 0 0;
   color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.card--menu-builder {
+  min-height: clamp(420px, 70vh, 860px);
+  padding: 2.25rem;
+  gap: 1.75rem;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.card--menu-builder .table-wrapper {
+  min-height: clamp(280px, 45vh, 520px);
 }
 
 @media (max-width: 960px) {

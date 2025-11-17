@@ -32,6 +32,29 @@ body {
   min-height: 100vh;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+}
+
+h2 {
+  font-size: clamp(1.15rem, 2.5vw, 1.35rem);
+}
+
+h3 {
+  font-size: clamp(1rem, 2vw, 1.15rem);
+}
+
 .hidden {
   display: none !important;
 }

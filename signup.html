@@ -6,6 +6,7 @@
   data-table-order-items="order_item"
   data-table-items="item"
   data-table-menu-items="item"
+  data-table-cafes="cafe"
 >
   <head>
     <meta charset="UTF-8" />
@@ -30,14 +31,16 @@
         <p class="auth-subtitle">Create an account to manage your café.</p>
       </div>
       <form id="signup-form" class="auth-form" method="post">
-        <div class="form-row">
+        <div class="form-row form-row-stack">
           <label class="form-field">
             <span>Full name</span>
             <input type="text" name="name" placeholder="Alex Rivera" required />
           </label>
           <label class="form-field">
-            <span>Café ID</span>
-            <input type="text" name="cafeId" placeholder="CAF-001" required />
+            <span>Café</span>
+            <select id="signup-cafe" name="cafeId" required>
+              <option value="" selected disabled>Loading cafés…</option>
+            </select>
           </label>
         </div>
         <label class="form-field">
