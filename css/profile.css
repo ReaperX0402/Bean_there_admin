@@ -19,6 +19,28 @@
   margin: 0.25rem 0 0;
 }
 
+.profile-cafe-details {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.profile-cafe-name {
+  font-weight: 600;
+}
+
+.profile-cafe-id {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(140, 90, 60, 0.12);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .profile-card ul {
   margin: 0;
   padding-left: 1.1rem;
