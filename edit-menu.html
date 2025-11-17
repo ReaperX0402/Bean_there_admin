@@ -73,7 +73,6 @@
               <thead>
                 <tr>
                   <th>Menu</th>
-                  <th>Cafe ID</th>
                   <th>Status</th>
                   <th>Updated</th>
                   <th>Actions</th>
@@ -107,7 +106,6 @@
               <thead>
                 <tr>
                   <th>Menu item</th>
-                  <th>Menu ID</th>
                   <th>Price</th>
                   <th>Availability</th>
                   <th>Actions</th>
@@ -131,10 +129,7 @@
             <span>Item name</span>
             <input type="text" name="itemName" placeholder="Iced Mocha" required />
           </label>
-          <label class="form-field">
-            <span>Menu ID</span>
-            <input type="text" name="menuId" placeholder="1" required />
-          </label>
+          <input type="hidden" name="menuId" required />
           <label class="form-field">
             <span>Description</span>
             <textarea name="description" placeholder="Tasting notes, ingredients, etc." rows="3"></textarea>

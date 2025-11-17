@@ -90,7 +90,7 @@ const setSelectedMenuDetails = () => {
     return;
   }
 
-  selectedMenuDetails.textContent = `Managing items for "${targetMenu.name}" (Menu ID ${targetMenu.menu_id}).`;
+  selectedMenuDetails.textContent = `Managing items for "${targetMenu.name}".`;
 };
 
 const updateAddMenuItemAvailability = () => {
@@ -109,12 +109,12 @@ const populateMenuItemsTable = () => {
   menuItemsTableBody.innerHTML = '';
 
   if (selectedMenuId === null || selectedMenuId === undefined) {
-    menuItemsTableBody.innerHTML = renderPlaceholderRow(5, 'Select a menu to view its items.');
+    menuItemsTableBody.innerHTML = renderPlaceholderRow(4, 'Select a menu to view its items.');
     return;
   }
 
   if (!menuItems.length) {
-    menuItemsTableBody.innerHTML = renderPlaceholderRow(5, 'No items found for this menu. Use "Add item" to create one.');
+    menuItemsTableBody.innerHTML = renderPlaceholderRow(4, 'No items found for this menu. Use "Add item" to create one.');
     return;
   }
 
@@ -125,15 +125,9 @@ const populateMenuItemsTable = () => {
           <td>
             <div class="menu-item-cell">
               <strong>${item.name}</strong>
-              <div class="menu-item-meta">ID: ${item.item_id}${
-                item.menu_id !== null && item.menu_id !== undefined
-                  ? ` • Menu: ${item.menu_id}`
-                  : ''
-              }</div>
               ${item.description ? `<div class="menu-item-description">${item.description}</div>` : ''}
             </div>
           </td>
-          <td>${item.menu_id ?? '—'}</td>
           <td>${formatCurrency(item.price)}</td>
           <td><span class="badge ${item.status}">${formatStatus(item.status)}</span></td>
           <td>
@@ -155,7 +149,7 @@ const populateMenusTable = () => {
   menusTableBody.innerHTML = '';
 
   if (!menus.length) {
-    menusTableBody.innerHTML = renderPlaceholderRow(5, 'No menus found. Use "Create menu" to add one.');
+    menusTableBody.innerHTML = renderPlaceholderRow(4, 'No menus found. Use "Create menu" to add one.');
     return;
   }
 
@@ -166,11 +160,9 @@ const populateMenusTable = () => {
           <td>
             <div class="menu-item-cell">
               <strong>${menu.name}</strong>
-              <div class="menu-item-meta">Menu ID: ${menu.menu_id}</div>
               ${menu.description ? `<div class="menu-item-description">${menu.description}</div>` : ''}
             </div>
           </td>
-          <td>${menu.cafe_id ?? '—'}</td>
           <td><span class="badge ${menu.is_active ? 'available' : 'out_of_stock'}">${formatStatus(
             formatMenuActiveStatus(menu.is_active)
           )}</span></td>
@@ -210,7 +202,7 @@ const populateMenuSelector = () => {
   const options = menus
     .map(
       (menu) => `
-        <option value="${menu.menu_id}">${menu.name} (${menu.menu_id})</option>
+        <option value="${menu.menu_id}">${menu.name}</option>
       `
     )
     .join('');
@@ -343,7 +335,7 @@ const refreshMenuItems = async () => {
   }
 
   try {
-    menuItemsTableBody.innerHTML = renderPlaceholderRow(5, 'Loading menu items…');
+    menuItemsTableBody.innerHTML = renderPlaceholderRow(4, 'Loading menu items…');
     const identifier = selectedMenuId;
     const { data, error } = await supabaseClient
       .from(TABLES.items)
@@ -357,7 +349,7 @@ const refreshMenuItems = async () => {
   } catch (error) {
     console.error('Failed to load menu items', error);
     menuItems = [];
-    menuItemsTableBody.innerHTML = renderPlaceholderRow(5, 'Unable to load menu items from Supabase.');
+    menuItemsTableBody.innerHTML = renderPlaceholderRow(4, 'Unable to load menu items from Supabase.');
   }
 };
 
@@ -365,7 +357,7 @@ const refreshMenus = async () => {
   if (!supabaseClient || !menusTableBody) return;
 
   try {
-    menusTableBody.innerHTML = renderPlaceholderRow(5, 'Loading menus…');
+    menusTableBody.innerHTML = renderPlaceholderRow(4, 'Loading menus…');
     const { data, error } = await supabaseClient
       .from(TABLES.menus)
       .select('menu_id, cafe_id, name, description, is_active, updated_at, created_at')
@@ -379,7 +371,7 @@ const refreshMenus = async () => {
   } catch (error) {
     console.error('Failed to load menus', error);
     menus = [];
-    menusTableBody.innerHTML = renderPlaceholderRow(5, 'Unable to load menus from Supabase.');
+    menusTableBody.innerHTML = renderPlaceholderRow(4, 'Unable to load menus from Supabase.');
     populateMenuSelector();
   }
 };
@@ -403,7 +395,7 @@ const handleMenuItemFormSubmit = async (event) => {
     const priceValue = Number(formData.get('price'));
 
     if (!name || !menuIdInput) {
-      showNotice('Please provide both a menu ID and item name.', 'warning');
+      showNotice('Please provide both a menu selection and item name.', 'warning');
       return;
     }
 
@@ -473,7 +465,7 @@ const handleMenuDefinitionFormSubmit = async (event) => {
       : '');
 
     if (!name || !derivedCafeId) {
-      showNotice('Both menu name and cafe ID are required.', 'warning');
+      showNotice('Both menu name and cafe selection are required.', 'warning');
       return;
     }
 
@@ -661,10 +653,10 @@ const handleMenuSelectorChange = (event) => {
 
 const initialize = async () => {
   if (menusTableBody) {
-    menusTableBody.innerHTML = renderPlaceholderRow(5, 'Connect to Supabase to load menus.');
+    menusTableBody.innerHTML = renderPlaceholderRow(4, 'Connect to Supabase to load menus.');
   }
   if (menuItemsTableBody) {
-    menuItemsTableBody.innerHTML = renderPlaceholderRow(5, 'Connect to Supabase to load menu items.');
+    menuItemsTableBody.innerHTML = renderPlaceholderRow(4, 'Connect to Supabase to load menu items.');
   }
 
   bindMenuItemDialogLifecycle();
