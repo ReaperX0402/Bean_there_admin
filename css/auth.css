@@ -76,6 +76,10 @@ body::after {
   gap: 1rem;
 }
 
+.form-row.form-row-stack {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .auth-switch {
   margin: 0;
   text-align: center;

@@ -8,10 +8,13 @@ import {
 import { showNotice, setFormLoading, hideNotice } from '../common/ui.js';
 
 const signupForm = document.getElementById('signup-form');
+const cafeSelect = document.getElementById('signup-cafe');
+const htmlRoot = document.documentElement;
 
 const supabaseConfig = getSupabaseConfig();
 const supabase = getSupabaseClient();
 const ADMIN_TABLE = getAdminTableName();
+const CAFES_TABLE = htmlRoot?.dataset?.tableCafes || 'cafe';
 
 const disableForm = () => {
   if (!signupForm) return;
@@ -20,6 +23,62 @@ const disableForm = () => {
       element.disabled = true;
     }
   });
+};
+
+const setCafeSelectState = (label, { disabled = true } = {}) => {
+  if (!cafeSelect) return;
+  cafeSelect.innerHTML = '';
+  const option = document.createElement('option');
+  option.value = '';
+  option.textContent = label;
+  option.disabled = true;
+  option.selected = true;
+  cafeSelect.append(option);
+  cafeSelect.disabled = disabled;
+};
+
+const populateCafeSelect = (cafes) => {
+  if (!cafeSelect) return;
+  cafeSelect.innerHTML = '';
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Select a café';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  cafeSelect.append(placeholder);
+
+  cafes.forEach((cafe) => {
+    if (!cafe?.id) return;
+    const option = document.createElement('option');
+    option.value = cafe.id;
+    option.textContent = cafe.name ? `${cafe.name} (${cafe.id})` : cafe.id;
+    cafeSelect.append(option);
+  });
+
+  cafeSelect.disabled = cafes.length === 0;
+  if (!cafes.length) {
+    cafeSelect.firstElementChild.textContent = 'No cafés available';
+  }
+};
+
+const loadCafeOptions = async () => {
+  if (!supabase || !CAFES_TABLE || !cafeSelect) return;
+  setCafeSelectState('Loading cafés…');
+
+  try {
+    const { data, error } = await supabase
+      .from(CAFES_TABLE)
+      .select('id, name')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    populateCafeSelect(Array.isArray(data) ? data : []);
+  } catch (error) {
+    console.error('Unable to load café list for signup form', error);
+    setCafeSelectState('Unable to load cafés', { disabled: true });
+    showNotice('Unable to load cafés from Supabase. Try refreshing the page.', 'warning');
+  }
 };
 
 const initialize = async () => {
@@ -37,6 +96,8 @@ const initialize = async () => {
   if (session?.admin) {
     window.location.replace('index.html');
   }
+
+  await loadCafeOptions();
 };
 
 if (signupForm) {
