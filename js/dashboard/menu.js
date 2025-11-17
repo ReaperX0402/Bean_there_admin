@@ -42,6 +42,7 @@ let menus = [];
 let editingItemIndex = null;
 let editingMenuIndex = null;
 let selectedMenuId = null;
+let currentAdminCafeId = null;
 
 const parseIdentifierValue = (value) => {
   if (value === null || value === undefined || value === '') return null;
@@ -291,6 +292,11 @@ const closeMenuItemDialog = () => {
   }
 };
 
+const applyDefaultCafeId = () => {
+  if (!menuDefinitionForm?.cafeId) return;
+  menuDefinitionForm.cafeId.value = currentAdminCafeId ?? '';
+};
+
 const openMenuDefinitionDialog = (mode, index = null) => {
   if (!menuDefinitionDialog || !menuDefinitionForm) return;
 
@@ -315,6 +321,7 @@ const openMenuDefinitionDialog = (mode, index = null) => {
     }
   } else {
     menuDefinitionForm.reset();
+    applyDefaultCafeId();
     if (menuDefinitionForm.menuStatus) {
       menuDefinitionForm.menuStatus.value = 'active';
     }
@@ -461,12 +468,16 @@ const handleMenuDefinitionFormSubmit = async (event) => {
     const description = formData.get('menuDescription')?.toString().trim();
     const status = formData.get('menuStatus')?.toString();
 
-    if (!name || !cafeIdInput) {
+    const derivedCafeId = cafeIdInput || (currentAdminCafeId !== null && currentAdminCafeId !== undefined
+      ? String(currentAdminCafeId)
+      : '');
+
+    if (!name || !derivedCafeId) {
       showNotice('Both menu name and cafe ID are required.', 'warning');
       return;
     }
 
-    const cafeIdValue = parseIdentifierValue(cafeIdInput);
+    const cafeIdValue = parseIdentifierValue(derivedCafeId);
     const payload = buildMenuDefinitionPayload({
       name,
       cafeId: cafeIdValue,
@@ -623,6 +634,7 @@ const bindMenuDefinitionDialogLifecycle = () => {
     if (menuDefinitionForm) {
       setFormLoading(menuDefinitionForm, false);
       menuDefinitionForm.reset();
+      applyDefaultCafeId();
     }
   });
 
@@ -683,6 +695,8 @@ const initialize = async () => {
   const { supabase, session } = await initializeDashboardPage('menu');
   if (!supabase || !session) return;
   supabaseClient = supabase;
+  currentAdminCafeId = session?.admin?.cafe_id ?? null;
+  applyDefaultCafeId();
 
   await refreshMenus();
   setSelectedMenuDetails();
