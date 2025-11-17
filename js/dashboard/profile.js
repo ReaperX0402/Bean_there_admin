@@ -4,7 +4,7 @@ import { initializeDashboardPage } from './shared.js';
 const htmlRoot = document.documentElement;
 const profileName = document.getElementById('profile-name');
 const profileEmail = document.getElementById('profile-email');
-const profileCafe = document.getElementById('profile-cafe');
+const profileCafeName = document.getElementById('profile-cafe-name');
 const profileCreated = document.getElementById('profile-created');
 const profileNotes = document.getElementById('profile-notes');
 
@@ -16,26 +16,26 @@ let supabaseClient = null;
 const setLoadingState = () => {
   if (profileName) profileName.textContent = 'Loading…';
   if (profileEmail) profileEmail.textContent = 'Loading…';
-  if (profileCafe) profileCafe.textContent = 'Loading…';
+  if (profileCafeName) profileCafeName.textContent = 'Loading…';
   if (profileCreated) profileCreated.textContent = 'Loading…';
 };
 
-const renderCafeDetails = (cafeId, cafeDetails) => {
-  if (!profileCafe) return;
-  profileCafe.textContent = cafeDetails?.name ?? (cafeId || '—');
+const renderCafeDetails = (cafeDetails) => {
+  if (profileCafeName) {
+    const resolvedCafeName = cafeDetails?.name ?? '—';
+    profileCafeName.textContent = resolvedCafeName || '—';
+  }
 };
 
 const populateProfile = (admin, cafeDetails = null) => {
   if (!admin) return;
   if (profileName) profileName.textContent = admin.name || 'Admin';
   if (profileEmail) profileEmail.textContent = admin.email || '—';
-  renderCafeDetails(admin.cafe_id, cafeDetails);
+  renderCafeDetails(cafeDetails);
   if (profileCreated) profileCreated.textContent = formatDateTime(admin.created_at);
   if (profileNotes) {
-    const fallbackLabel = admin.cafe_id ? `café ${admin.cafe_id}` : 'your café';
-    const cafeLabel = cafeDetails?.name?? (admin.cafe_id ? `café ${admin.cafe_id}` : 'your café');
-   profileNotes.textContent = `Details reflect the current admin record for ${cafeLabel}.`;
-    profileNotes.textContent = `Details reflect the current admin record for ${cafeLabel}.`
+    const cafeLabel = cafeDetails?.name || 'your café';
+    profileNotes.textContent = `Details reflect the current admin record for ${cafeLabel}.`;
   }
 };
 
