@@ -9,6 +9,7 @@ const profileCreated = document.getElementById('profile-created');
 const profileNotes = document.getElementById('profile-notes');
 
 const ADMIN_TABLE = htmlRoot.dataset.tableAdmin || 'admin';
+const CAFES_TABLE = htmlRoot.dataset.tableCafes || 'cafe';
 
 let supabaseClient = null;
 
@@ -19,14 +20,42 @@ const setLoadingState = () => {
   if (profileCreated) profileCreated.textContent = 'Loading…';
 };
 
-const populateProfile = (admin) => {
+const renderCafeDetails = (cafeId, cafeDetails) => {
+  if (!profileCafe) return;
+  profileCafe.innerHTML = '';
+
+  if (!cafeId) {
+    profileCafe.textContent = '—';
+    return;
+  }
+
+  const cafeWrapper = document.createElement('div');
+  cafeWrapper.className = 'profile-cafe-details';
+
+  if (cafeDetails?.name) {
+    const cafeName = document.createElement('span');
+    cafeName.className = 'profile-cafe-name';
+    cafeName.textContent = cafeDetails.name;
+    cafeWrapper.appendChild(cafeName);
+  }
+
+  const cafeIdPill = document.createElement('span');
+  cafeIdPill.className = 'profile-cafe-id';
+  cafeIdPill.textContent = cafeId;
+  cafeWrapper.appendChild(cafeIdPill);
+
+  profileCafe.appendChild(cafeWrapper);
+};
+
+const populateProfile = (admin, cafeDetails = null) => {
   if (!admin) return;
   if (profileName) profileName.textContent = admin.name || 'Admin';
   if (profileEmail) profileEmail.textContent = admin.email || '—';
-  if (profileCafe) profileCafe.textContent = admin.cafe_id || '—';
+  renderCafeDetails(admin.cafe_id, cafeDetails);
   if (profileCreated) profileCreated.textContent = formatDateTime(admin.created_at);
   if (profileNotes) {
-    const cafeLabel = admin.cafe_id ? `café ${admin.cafe_id}` : 'your café';
+    const fallbackLabel = admin.cafe_id ? `café ${admin.cafe_id}` : 'your café';
+    const cafeLabel = cafeDetails?.name && admin.cafe_id ? `${cafeDetails.name} (${admin.cafe_id})` : fallbackLabel;
     profileNotes.textContent = `Details reflect the current admin record for ${cafeLabel}.`;
   }
 };
@@ -48,6 +77,22 @@ const fetchLatestAdminRecord = async (admin) => {
   return data ? { ...data, admin_id: data.id } : admin;
 };
 
+const fetchCafeDetails = async (cafeId) => {
+  if (!supabaseClient || !cafeId) return null;
+
+  const { data, error } = await supabaseClient
+    .from(CAFES_TABLE)
+    .select('id, name')
+    .eq('id', cafeId)
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') {
+    throw error;
+  }
+
+  return data;
+};
+
 const initialize = async () => {
   setLoadingState();
 
@@ -60,7 +105,8 @@ const initialize = async () => {
 
   try {
     const adminRecord = supabase ? await fetchLatestAdminRecord(fallback) : fallback;
-    populateProfile(adminRecord);
+    const cafeDetails = supabase && adminRecord?.cafe_id ? await fetchCafeDetails(adminRecord.cafe_id) : null;
+    populateProfile(adminRecord, cafeDetails);
     if (supabase) {
       showNotice('Profile details loaded from the admin table.', 'success');
     }
