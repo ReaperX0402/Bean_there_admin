@@ -14,8 +14,6 @@ const AUTH_TRANSITION_DURATION = 450;
 
 let supabaseConfig = null;
 let supabase = null;
-let supabaseConfig = null;
-let supabase = null;
 const ADMIN_TABLE = getAdminTableName();
 
 const wireSignupTransition = () => {
