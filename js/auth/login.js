@@ -8,10 +8,29 @@ import {
 import { showNotice, setFormLoading, hideNotice } from '../common/ui.js';
 
 const loginForm = document.getElementById('login-form');
+const authSwitchLink = document.querySelector('.auth-switch a');
+
+const AUTH_TRANSITION_DURATION = 450;
 
 let supabaseConfig = null;
 let supabase = null;
 const ADMIN_TABLE = getAdminTableName();
+
+const wireSignupTransition = () => {
+  if (!authSwitchLink) return;
+
+  authSwitchLink.addEventListener('click', (event) => {
+    const target = event.currentTarget;
+    const href = target instanceof HTMLAnchorElement ? target.getAttribute('href') : null;
+    if (!href) return;
+
+    event.preventDefault();
+    document.body.classList.add('auth-transitioning');
+    window.setTimeout(() => {
+      window.location.href = href;
+    }, AUTH_TRANSITION_DURATION);
+  });
+};
 
 const prefillFromQuery = () => {
   if (!loginForm) return;
@@ -133,3 +152,4 @@ if (loginForm) {
 }
 
 initialize();
+wireSignupTransition();
