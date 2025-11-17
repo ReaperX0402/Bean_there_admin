@@ -91,7 +91,7 @@
       <form method="dialog" class="dialog-form" id="menu-form">
         <header class="dialog-header">
           <h2 id="menu-dialog-title">Add menu item</h2>
-          <button type="submit" class="icon-btn" value="cancel" aria-label="Close dialog">✕</button>
+          <button type="button" class="icon-btn" data-dialog-dismiss aria-label="Close dialog">✕</button>
         </header>
         <div class="dialog-body">
           <label class="form-field">
@@ -119,13 +119,13 @@
           </label>
         </div>
         <footer class="dialog-footer">
-          <button value="cancel" class="secondary-btn">Cancel</button>
+          <button type="button" class="secondary-btn" data-dialog-dismiss>Cancel</button>
           <button value="confirm" class="primary-btn">Save item</button>
         </footer>
       </form>
     </dialog>
 
-    <script src="supabase_config.js"></script>
+    <script src="js/common/supabase_config.js"></script>
     <script src="js/dashboard/menu.js" type="module"></script>
   </body>
 </html>
