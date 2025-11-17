@@ -7,6 +7,40 @@ dialog::backdrop {
   font-size: 0.9rem;
 }
 
+.card--menus .menu-helper {
+  margin: 0 0 0.75rem;
+}
+
+.card-header--menu-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.menu-item-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.form-field--inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.form-field--inline select {
+  min-width: 12rem;
+}
+
+#selected-menu-details {
+  margin-top: 0.35rem;
+}
+
 .menu-item-description {
   color: var(--text-secondary);
   font-size: 0.85rem;
