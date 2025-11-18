@@ -61,8 +61,8 @@ const fetchCafeDetails = async (cafeId) => {
 
   const { data, error } = await supabaseClient
     .from(CAFES_TABLE)
-    .select('id, name')
-    .eq('id', cafeId)
+    .select('cafe_id, name')
+    .eq('cafe_id', cafeId)
     .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {
