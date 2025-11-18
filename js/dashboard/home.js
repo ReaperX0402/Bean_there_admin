@@ -13,6 +13,12 @@ const ordersTableBody = document.getElementById('orders-table-body');
 const statusChips = Array.from(document.querySelectorAll('[data-status]'));
 const connectionStatus = document.getElementById('connection-status');
 
+const STATUS_OPTIONS = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'in_progress', label: 'In progress' },
+  { value: 'completed', label: 'Completed' }
+];
+
 const TABLES = {
   orders: htmlRoot.dataset.tableOrders || 'order',
   orderItems: htmlRoot.dataset.tableOrderItems || 'order_item',
@@ -31,6 +37,28 @@ const renderOrderItems = (items) => {
     <div class="order-items">
       ${items.map((item) => `<span class="order-item-chip">${item.qty}× ${item.name}</span>`).join('')}
     </div>
+  `;
+};
+
+const renderStatusSelect = (order) => {
+  const orderId = order?.order_id ?? '';
+  const label = orderId ? `Update status for order #${orderId}` : 'Update status';
+  const options = STATUS_OPTIONS.map(
+    (option) =>
+      `<option value="${option.value}" ${option.value === order.status ? 'selected' : ''}>${option.label}</option>`
+  ).join('');
+
+  return `
+    <label class="status-select">
+      <select
+        class="order-status-select"
+        data-order-id="${orderId}"
+        data-current-status="${order.status}"
+        aria-label="${label}"
+      >
+        ${options}
+      </select>
+    </label>
   `;
 };
 
@@ -56,8 +84,13 @@ const populateOrders = () => {
       (order) => `
         <tr>
           <td>${order.order_id}</td>
-          <td>${order.user_id ?? '—'}</td>
-          <td><span class="badge ${order.status}">${formatStatus(order.status)}</span></td>
+          <td>${order.user_name || order.user_id || '—'}</td>
+          <td>
+            <div class="status-cell">
+              <span class="badge ${order.status}">${formatStatus(order.status)}</span>
+              ${renderStatusSelect(order)}
+            </div>
+          </td>
           <td>${formatCurrency(order.total)}</td>
           <td>${order.placed_at}</td>
           <td>${renderOrderItems(order.items)}</td>
@@ -67,6 +100,52 @@ const populateOrders = () => {
     .join('');
 
   ordersTableBody.innerHTML = rows;
+  bindStatusSelects();
+};
+
+const handleStatusChange = async (event) => {
+  if (!supabaseClient) return;
+  const select = event.target;
+  const orderId = select.dataset.orderId;
+  const previousStatus = select.dataset.currentStatus || select.dataset.previousStatus || select.value;
+  const nextStatus = normalizeOrderStatus(select.value);
+
+  if (!orderId || !nextStatus || nextStatus === previousStatus) {
+    select.value = previousStatus;
+    return;
+  }
+
+  select.disabled = true;
+  try {
+    const { error } = await supabaseClient
+      .from(TABLES.orders)
+      .update({ status: nextStatus })
+      .eq('order_id', orderId);
+
+    if (error) throw error;
+
+    const order = orders.find((entry) => `${entry.order_id}` === `${orderId}`);
+    if (order) {
+      order.status = nextStatus;
+    }
+    select.dataset.currentStatus = nextStatus;
+    showNotice(`Order #${orderId} marked as ${formatStatus(nextStatus)}.`, 'success');
+    populateOrders();
+  } catch (error) {
+    console.error('Unable to update order status', error);
+    select.value = previousStatus;
+    showNotice('Unable to update order status. Please try again.', 'error');
+  } finally {
+    select.disabled = false;
+  }
+};
+
+const bindStatusSelects = () => {
+  if (!ordersTableBody) return;
+  const selects = Array.from(ordersTableBody.querySelectorAll('.order-status-select'));
+  selects.forEach((select) => {
+    select.addEventListener('change', handleStatusChange);
+  });
 };
 
 const fetchOrderItems = async (orderRows) => {
@@ -138,7 +217,7 @@ const refreshOrders = async () => {
     ordersTableBody.innerHTML = renderPlaceholderRow(6, 'Loading orders…');
     const { data, error } = await supabaseClient
       .from(TABLES.orders)
-      .select('order_id, user_id, status, total, created_at, notes, cafe_id')
+      .select('order_id, user_id, user_name, status, total, created_at, notes, cafe_id')
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -155,6 +234,7 @@ const refreshOrders = async () => {
       return {
         order_id: row?.order_id ?? '—',
         user_id: row?.user_id,
+        user_name: row?.user_name || '',
         cafe_id: row?.cafe_id,
         status,
         total: Number.isFinite(total) ? total : 0,

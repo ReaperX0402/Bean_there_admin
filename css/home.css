@@ -7,3 +7,18 @@
 .order-table {
   overflow-x: auto;
 }
+
+.status-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-select select {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.75rem;
+  background: var(--surface);
+  font-size: 0.9rem;
+}
