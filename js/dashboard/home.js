@@ -19,8 +19,9 @@ const STATUS_OPTIONS = [
   { value: 'completed', label: 'Completed' }
 ];
 
+// Match your Supabase table names
 const TABLES = {
-  orders: htmlRoot.dataset.tableOrders || 'order',
+  orders: htmlRoot.dataset.tableOrders || 'orders',
   orderItems: htmlRoot.dataset.tableOrderItems || 'order_item',
   items: htmlRoot.dataset.tableItems || 'item'
 };
@@ -84,10 +85,10 @@ const populateOrders = () => {
       (order) => `
         <tr>
           <td>${order.order_id}</td>
+          <!-- Show username instead of user_id -->
           <td>${order.user_name || order.user_id || '—'}</td>
           <td>
             <div class="status-cell">
-              <span class="badge ${order.status}">${formatStatus(order.status)}</span>
               ${renderStatusSelect(order)}
             </div>
           </td>
@@ -214,14 +215,33 @@ const fetchOrderItems = async (orderRows) => {
 const refreshOrders = async () => {
   if (!supabaseClient) return;
   try {
-    ordersTableBody.innerHTML = renderPlaceholderRow(6, 'Loading orders…');
+    if (ordersTableBody) {
+      ordersTableBody.innerHTML = renderPlaceholderRow(6, 'Loading orders…');
+    }
+
+    // JOIN orders -> user to get username
     const { data, error } = await supabaseClient
       .from(TABLES.orders)
-      .select('order_id, user_id, user_name, status, total, created_at, notes, cafe_id')
+      .select(`
+        order_id,
+        user_id,
+        status,
+        total,
+        created_at,
+        notes,
+        cafe_id,
+        user:user (
+          user_id,
+          username
+        )
+      `)
       .order('created_at', { ascending: false })
       .limit(100);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase orders error:', error);
+      throw error;
+    }
 
     const itemsByOrder = await fetchOrderItems(data);
 
@@ -234,7 +254,7 @@ const refreshOrders = async () => {
       return {
         order_id: row?.order_id ?? '—',
         user_id: row?.user_id,
-        user_name: row?.user_name || '',
+        user_name: row?.user?.username || '',
         cafe_id: row?.cafe_id,
         status,
         total: Number.isFinite(total) ? total : 0,
@@ -248,7 +268,9 @@ const refreshOrders = async () => {
   } catch (error) {
     console.error('Failed to load orders', error);
     orders = [];
-    ordersTableBody.innerHTML = renderPlaceholderRow(6, 'Unable to load orders from Supabase.');
+    if (ordersTableBody) {
+      ordersTableBody.innerHTML = renderPlaceholderRow(6, 'Unable to load orders from Supabase.');
+    }
   }
 };
 
@@ -270,19 +292,23 @@ const initialize = async () => {
 
   initializeFilters();
   const { supabase, session } = await initializeDashboardPage('orders');
+
   if (!supabase) {
     if (connectionStatus) {
       connectionStatus.textContent = 'Supabase credentials missing';
     }
     return;
   }
+
   if (!session) {
     if (connectionStatus) {
       connectionStatus.textContent = 'Authentication required';
     }
     return;
   }
+
   supabaseClient = supabase;
+
   if (connectionStatus) {
     connectionStatus.textContent = 'Connected to Supabase';
   }
